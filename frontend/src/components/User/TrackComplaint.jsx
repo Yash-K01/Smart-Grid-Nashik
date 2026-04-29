@@ -171,7 +171,7 @@ function TrackComplaint() {
                             <div>
                               <p className="text-gray-600 font-semibold">Uploaded Image:</p>
                               <img 
-                                src={`http://localhost:5000${complaint.imageUrl}`} 
+                                src={`${API_URL.replace('/api', '')}${complaint.imageUrl}`} 
                                 alt="Complaint" 
                                 className="max-h-48 rounded-lg mt-2 border border-gray-200"
                                 onError={(e) => {

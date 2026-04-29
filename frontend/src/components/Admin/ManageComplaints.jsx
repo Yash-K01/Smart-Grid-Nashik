@@ -262,7 +262,7 @@ function ManageComplaints() {
                     <div className="mb-4">
                       <p className="text-gray-600 text-sm font-semibold">📷 Complaint Image:</p>
                       <img 
-                        src={`http://localhost:5000${complaint.imageUrl}`} 
+                        src={`${API_URL.replace('/api', '')}${complaint.imageUrl}`} 
                         alt="Complaint" 
                         className="max-h-48 rounded-lg mt-1 border border-gray-200 shadow-sm"
                         onError={(e) => {
@@ -317,7 +317,7 @@ function ManageComplaints() {
                 <div className="mb-4">
                   <p className="text-gray-600 text-sm font-semibold">📷 Complaint Image:</p>
                   <img 
-                    src={`http://localhost:5000${selectedComplaint.imageUrl}`} 
+                    src={`${API_URL.replace('/api', '')}${selectedComplaint.imageUrl}`} 
                     alt="Complaint" 
                     className="max-h-32 rounded-lg mt-1 border border-gray-200"
                   />
