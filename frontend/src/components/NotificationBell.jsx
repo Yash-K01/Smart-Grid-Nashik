@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { Bell, CheckCircle, XCircle, AlertCircle, Clock, Mail, UserPlus, Trash2, CheckCheck } from 'lucide-react'
-import { API_URL } from '../../config/api'
+import { API_URL } from '../config/api'
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState([])
