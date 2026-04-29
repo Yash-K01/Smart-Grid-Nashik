@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, Phone, MapPin, Zap, Mail, Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { API_URL } from '../../config/api'
 
 function Register() {
   const navigate = useNavigate()
