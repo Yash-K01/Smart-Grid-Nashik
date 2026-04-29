@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { API_URL } from '../../config/api'
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -26,7 +27,7 @@ function TrackComplaint() {
   const fetchComplaints = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/user/complaints', {
+      const response = await axios.get(`${API_URL}/user/complaints`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setComplaints(response.data)

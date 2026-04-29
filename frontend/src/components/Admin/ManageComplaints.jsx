@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { API_URL } from '../../config/api'
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -35,7 +36,7 @@ function ManageComplaints() {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/admin/complaints', {
+      const response = await axios.get(`${API_URL}/admin/complaints`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setComplaints(response.data)
@@ -51,7 +52,7 @@ function ManageComplaints() {
   const fetchTechnicians = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/admin/technicians', {
+      const response = await axios.get(`${API_URL}/admin/technicians`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setTechnicians(response.data)
@@ -78,7 +79,7 @@ function ManageComplaints() {
   const assignTechnician = async (complaintId, technicianId) => {
     try {
       const token = localStorage.getItem('token')
-      await axios.post('http://localhost:5000/api/admin/assign', 
+      await axios.post(`${API_URL}/admin/assign`, 
         { complaintId, technicianId },
         { headers: { Authorization: `Bearer ${token}` } }
       )

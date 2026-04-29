@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { Bell, CheckCircle, XCircle, AlertCircle, Clock, Mail, UserPlus, Trash2, CheckCheck } from 'lucide-react'
+import { API_URL } from '../../config/api'
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState([])
@@ -35,7 +36,7 @@ function NotificationBell() {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/notifications', {
+      const response = await axios.get(`${API_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setNotifications(response.data)
@@ -47,7 +48,7 @@ function NotificationBell() {
   const fetchUnreadCount = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/notifications/unread-count', {
+      const response = await axios.get(`${API_URL}/notifications/unread-count`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setUnreadCount(response.data.count)
@@ -59,7 +60,7 @@ function NotificationBell() {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, {
+      await axios.put(`${API_URL}/notifications/${id}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -76,7 +77,7 @@ function NotificationBell() {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token')
-      await axios.put('http://localhost:5000/api/notifications/mark-all-read', {}, {
+      await axios.put(`${API_URL}/notifications/mark-all-read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -91,7 +92,7 @@ function NotificationBell() {
   const deleteNotification = async (id) => {
     try {
       const token = localStorage.getItem('token')
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`, {
+      await axios.delete(`${API_URL}/notifications/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       

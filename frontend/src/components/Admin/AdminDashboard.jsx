@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, 
 import ManageComplaints from './ManageComplaints'
 import RegisterTechnician from './RegisterTechnician'
 import NotificationBell from '../NotificationBell'
+import { API_URL } from '../../config/api'
 
 function AdminDashboard() {
   const { user, logout } = useAuth()
@@ -44,10 +45,10 @@ function AdminDashboard() {
       const token = localStorage.getItem('token')
       
       const [statsRes, recentRes, areaRes, monthlyRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/complaints/recent', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/complaints/by-area', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/complaints/monthly', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_URL}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/admin/complaints/recent`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/admin/complaints/by-area`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/admin/complaints/monthly`, { headers: { Authorization: `Bearer ${token}` } })
       ])
       
       setStats(statsRes.data)

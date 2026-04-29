@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { UserPlus, Trash2, Mail, Phone, MapPin, GraduationCap, Briefcase, Eye, EyeOff } from 'lucide-react'
+import { API_URL } from '../../config/api'
 
 function RegisterTechnician({ showList = true, showForm = true }) {
   const [technicians, setTechnicians] = useState([])
@@ -22,7 +23,7 @@ function RegisterTechnician({ showList = true, showForm = true }) {
   const fetchTechnicians = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/admin/technicians', {
+      const response = await axios.get(`${API_URL}/admin/technicians`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setTechnicians(response.data)
@@ -48,7 +49,7 @@ function RegisterTechnician({ showList = true, showForm = true }) {
     
     try {
       const token = localStorage.getItem('token')
-      await axios.post('http://localhost:5000/api/admin/technician', formData, {
+      await axios.post(`${API_URL}/admin/technician`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -70,7 +71,7 @@ function RegisterTechnician({ showList = true, showForm = true }) {
     if (window.confirm('Are you sure you want to delete this technician?')) {
       try {
         const token = localStorage.getItem('token')
-        await axios.delete(`http://localhost:5000/api/admin/technician/${id}`, {
+        await axios.delete(`${API_URL}/admin/technician/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         toast.success('Technician deleted successfully')

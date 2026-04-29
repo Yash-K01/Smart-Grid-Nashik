@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, Clock, MapPin, Phone, User, AlertCircle, Loader, 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { API_URL } from '../../config/api'
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -32,7 +33,7 @@ function ViewAssignments({ mode = 'all' }) {
   const fetchAssignments = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/technician/complaints', {
+      const response = await axios.get(`${API_URL}/technician/complaints`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setAssignments(response.data)
@@ -48,7 +49,7 @@ function ViewAssignments({ mode = 'all' }) {
     setProcessingId(id)
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`http://localhost:5000/api/technician/accept/${id}`, {}, {
+      await axios.put(`${API_URL}/technician/accept/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       toast.success('Work accepted! Status updated to In Progress')
@@ -71,7 +72,7 @@ function ViewAssignments({ mode = 'all' }) {
     setProcessingId(id)
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`http://localhost:5000/api/technician/reject/${id}`, { reason }, {
+      await axios.put(`${API_URL}/technician/reject/${id}`, { reason }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       toast.success('Work rejected! Complaint sent back to admin')
@@ -99,7 +100,7 @@ function ViewAssignments({ mode = 'all' }) {
     setProcessingId(selectedComplaint._id)
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`http://localhost:5000/api/technician/complete/${selectedComplaint._id}`, { remarks: remark }, {
+      await axios.put(`${API_URL}/technician/complete/${selectedComplaint._id}`, { remarks: remark }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       toast.success('Work completed successfully! Customer will be notified')
@@ -156,7 +157,7 @@ function ViewAssignments({ mode = 'all' }) {
     
     return (
       <MapContainer center={[lat, lng]} zoom={14} style={{ height: "250px", width: "100%", borderRadius: "0.5rem", zIndex: 1 }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
+        <TileLayer url={`${API_URL}/tile/{z}/{x}/{y}.png`} attribution='&copy; OpenStreetMap contributors' />
         <Marker position={[lat, lng]}>
           <Popup><b>Complaint Location</b><br />{complaint.locationAddress || `${lat}, ${lng}`}</Popup>
         </Marker>

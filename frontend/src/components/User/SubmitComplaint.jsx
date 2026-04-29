@@ -4,6 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { API_URL } from '../../config/api'
 
 // Fix Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -139,7 +140,7 @@ function SubmitComplaint() {
         submitData.append('image', imageFile)
       }
       
-      const response = await axios.post('http://localhost:5000/api/user/complaint', submitData, {
+      const response = await axios.post(`${API_URL}/user/complaint`, submitData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`

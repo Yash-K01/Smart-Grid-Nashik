@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, User, Wrench, Shield, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { API_URL } from '../../config/api'
 
 function Login() {
   const navigate = useNavigate()
@@ -47,7 +48,7 @@ function Login() {
     setLoading(true)
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

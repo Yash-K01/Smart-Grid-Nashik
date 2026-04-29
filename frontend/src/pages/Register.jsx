@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, Phone, MapPin, Zap, Mail, Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { API_URL } from '../../config/api'
 
 function Register() {
   const navigate = useNavigate()
@@ -74,7 +75,7 @@ function Register() {
     setLoading(true)
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ function Register() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+          src={`${API_URL}/background.jpg`} 
           className="w-full h-full object-cover" 
           alt="Background"
         />

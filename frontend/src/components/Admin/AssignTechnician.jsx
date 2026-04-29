@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { API_URL } from '../../config/api'
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -29,7 +30,7 @@ function AssignTechnician() {
   const fetchComplaint = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(`http://localhost:5000/api/admin/complaint/${id}`, {
+      const response = await axios.get(`${API_URL}/admin/complaint/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setComplaint(response.data)
@@ -45,7 +46,7 @@ function AssignTechnician() {
   const fetchTechnicians = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/admin/technicians', {
+      const response = await axios.get(`${API_URL}/admin/technicians`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setTechnicians(response.data)
@@ -59,7 +60,7 @@ function AssignTechnician() {
     setAssigning(true)
     try {
       const token = localStorage.getItem('token')
-      await axios.post('http://localhost:5000/api/admin/assign', 
+      await axios.post(`${API_URL}/admin/assign`, 
         { 
           complaintId: id,  // MongoDB uses string ID, not parseInt
           technicianId: technicianId 

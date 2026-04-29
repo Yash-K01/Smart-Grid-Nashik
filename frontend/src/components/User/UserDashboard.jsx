@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import SubmitComplaint from './SubmitComplaint'
 import TrackComplaint from './TrackComplaint'
 import NotificationBell from '../NotificationBell'
+import { API_URL } from '../../config/api'
 
 function UserDashboard() {
   const { user, logout } = useAuth()

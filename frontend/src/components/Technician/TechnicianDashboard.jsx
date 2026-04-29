@@ -6,6 +6,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import ViewAssignments from './ViewAssignments'
 import NotificationBell from '../NotificationBell'
+import { API_URL } from '../../config/api'
 
 function TechnicianDashboard() {
   const { user, logout } = useAuth()
@@ -46,7 +47,7 @@ function TechnicianDashboard() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:5000/api/technician/stats', {
+      const response = await axios.get(`${API_URL}/technician/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setStats(response.data)
