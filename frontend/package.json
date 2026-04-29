@@ -1,0 +1,29 @@
+{
+  "name": "smartgrid-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.15.2",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.292.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.30.3",
+    "react-scripts": "^0.0.0",
+    "recharts": "^3.8.1"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.3.0",
+    "vite": "^8.0.10"
+  }
+}
