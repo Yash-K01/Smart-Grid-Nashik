@@ -4,7 +4,7 @@ const API_CONFIG = {
     BASE_URL: 'http://localhost:5000/api'  // Local development
   },
   production: {
-    BASE_URL: 'https://smart-grid-nashik.onrender.com'  // REPLACE with your Render URL
+    BASE_URL: 'https://smart-grid-nashik.onrender.com/api'  // REPLACE with your Render URL
   }
 }
 
