@@ -1,10 +1,14 @@
 const express = require("express");
-
 const router = express.Router();
+
+const adminController = require("../controllers/adminController");
 
 const { protect, authorize } = require("../middleware/auth");
 
-const adminController = require("../controllers/adminController");
+const {
+    technicianValidation,
+    objectIdValidation
+} = require("../middleware/validation");
 
 router.get(
     "/stats",
@@ -45,6 +49,7 @@ router.get(
 "/complaint/:id",
 protect,
 authorize("admin"),
+objectIdValidation,
 adminController.getComplaintById
 );
 
@@ -59,6 +64,7 @@ router.put(
 "/complaint/:id",
 protect,
 authorize("admin"),
+objectIdValidation,
 adminController.updateComplaintStatus
 );
 
@@ -73,20 +79,23 @@ router.get(
     "/technician/:id",
     protect,
     authorize("admin"),
+    objectIdValidation,
     adminController.getTechnicianById
 );
 
 router.post(
-    "/technician",
-    protect,
-    authorize("admin"),
-    adminController.createTechnician
+"/technician",
+protect,
+authorize("admin"),
+technicianValidation,
+adminController.createTechnician
 );
 
 router.put(
     "/technician/:id",
     protect,
     authorize("admin"),
+    objectIdValidation,
     adminController.updateTechnician
 );
 
@@ -94,6 +103,7 @@ router.delete(
     "/technician/:id",
     protect,
     authorize("admin"),
+    objectIdValidation,
     adminController.deleteTechnician
 );
 
@@ -117,3 +127,5 @@ router.get(
     authorize("admin"),
     adminController.getMonthlyReport
 );
+
+module.exports = router;

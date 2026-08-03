@@ -4,11 +4,15 @@ const router = express.Router();
 
 const technicianController = require("../controllers/technicianController");
 
-const {
-    protect,
-    authorize,
-} = require("../middleware/auth");
+const { protect, authorize } = require("../middleware/auth");
 
+const {
+    objectIdValidation
+} = require("../middleware/validation");
+
+// ===================================
+// Dashboard
+// ===================================
 router.get(
     "/stats",
     protect,
@@ -16,6 +20,9 @@ router.get(
     technicianController.getDashboardStats
 );
 
+// ===================================
+// Complaints
+// ===================================
 router.get(
     "/complaints",
     protect,
@@ -23,10 +30,19 @@ router.get(
     technicianController.getComplaints
 );
 
+router.get(
+    "/complaint/:id",
+    protect,
+    authorize("technician"),
+    objectIdValidation,
+    technicianController.getComplaintById
+);
+
 router.put(
     "/accept/:id",
     protect,
     authorize("technician"),
+    objectIdValidation,
     technicianController.acceptComplaint
 );
 
@@ -34,21 +50,18 @@ router.put(
     "/complete/:id",
     protect,
     authorize("technician"),
+    objectIdValidation,
     technicianController.completeComplaint
 );
 
+// ===================================
+// Profile
+// ===================================
 router.get(
     "/profile",
     protect,
     authorize("technician"),
     technicianController.getProfile
-);
-
-router.get(
-    "/complaint/:id",
-    protect,
-    authorize("technician"),
-    technicianController.getComplaintById
 );
 
 router.put(
@@ -58,6 +71,9 @@ router.put(
     technicianController.updateProfile
 );
 
+// ===================================
+// History
+// ===================================
 router.get(
     "/history",
     protect,
@@ -65,6 +81,9 @@ router.get(
     technicianController.getComplaintHistory
 );
 
+// ===================================
+// Analytics
+// ===================================
 router.get(
     "/analytics",
     protect,

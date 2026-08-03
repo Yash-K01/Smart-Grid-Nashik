@@ -9,7 +9,28 @@ const complaintSchema = new mongoose.Schema(
       index: true,
     },
 
-    complaintType: {
+    assignedTechnicianId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Technician",
+      default: null,
+      index: true,
+    },
+
+    title: {
+      type: String,
+      required: [true, "Complaint title is required"],
+      trim: true,
+      maxlength: 150,
+    },
+
+    description: {
+      type: String,
+      required: [true, "Complaint description is required"],
+      trim: true,
+      maxlength: 1000,
+    },
+
+    category: {
       type: String,
       required: true,
       enum: [
@@ -20,42 +41,14 @@ const complaintSchema = new mongoose.Schema(
         "Billing Issue",
         "Transformer Issue",
         "Wire Damage",
+        "Street Light",
         "Other",
       ],
     },
 
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 1000,
-    },
-
-    imageUrl: {
+    image: {
       type: String,
       default: "",
-    },
-
-    latitude: {
-      type: Number,
-      default: null,
-    },
-
-    longitude: {
-      type: Number,
-      default: null,
-    },
-
-    locationAddress: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    priority: {
-      type: String,
-      enum: ["Low", "Medium", "High"],
-      default: "Medium",
     },
 
     status: {
@@ -72,14 +65,29 @@ const complaintSchema = new mongoose.Schema(
       index: true,
     },
 
-    assignedTechnicianId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Technician",
-      default: null,
-      index: true,
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High"],
+      default: "Medium",
     },
 
-    technicianRemarks: {
+    remarks: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    latitude: {
+      type: Number,
+      default: null,
+    },
+
+    longitude: {
+      type: Number,
+      default: null,
+    },
+
+    address: {
       type: String,
       default: "",
       trim: true,
@@ -99,18 +107,24 @@ const complaintSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    submittedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// ==============================
+// ==========================
 // Indexes
-// ==============================
+// ==========================
 complaintSchema.index({ userId: 1 });
-complaintSchema.index({ status: 1 });
 complaintSchema.index({ assignedTechnicianId: 1 });
+complaintSchema.index({ status: 1 });
+complaintSchema.index({ category: 1 });
 complaintSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Complaint", complaintSchema);

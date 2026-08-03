@@ -15,11 +15,17 @@ const notificationSchema = new mongoose.Schema(
       enum: ["User", "Admin", "Technician"],
     },
 
+    complaintId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Complaint",
+      default: null,
+    },
+
     title: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 100,
+      maxlength: 150,
     },
 
     message: {
@@ -29,15 +35,28 @@ const notificationSchema = new mongoose.Schema(
       maxlength: 1000,
     },
 
-    complaintId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Complaint",
-      default: null,
+    type: {
+      type: String,
+      enum: [
+        "GENERAL",
+        "NEW_COMPLAINT",
+        "ASSIGNED",
+        "STATUS_UPDATED",
+        "COMPLETED",
+        "REJECTED",
+        "SYSTEM"
+      ],
+      default: "GENERAL",
     },
 
     isRead: {
       type: Boolean,
       default: false,
+    },
+
+    readAt: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -51,11 +70,27 @@ const notificationSchema = new mongoose.Schema(
 notificationSchema.index({
   recipientId: 1,
   recipientType: 1,
+});
+
+notificationSchema.index({
+  complaintId: 1,
+});
+
+notificationSchema.index({
   isRead: 1,
 });
 
 notificationSchema.index({
   createdAt: -1,
 });
+
+// ==============================
+// Mark as Read
+// ==============================
+notificationSchema.methods.markAsRead = async function () {
+  this.isRead = true;
+  this.readAt = new Date();
+  return await this.save();
+};
 
 module.exports = mongoose.model("Notification", notificationSchema);
