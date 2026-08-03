@@ -119,8 +119,6 @@ technicianSchema.methods.toJSON = function () {
 // ====================================
 // Indexes
 // ====================================
-technicianSchema.index({ email: 1 });
-technicianSchema.index({ contactNumber: 1 });
 technicianSchema.index({ isAvailable: 1 });
 
 module.exports = mongoose.model("Technician", technicianSchema);
