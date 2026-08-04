@@ -334,9 +334,6 @@ function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'complaints' && <ManageComplaints />}
-        {activeTab === 'technicians' && <RegisterTechnician showList={true} showForm={false} />}
-        {activeTab === 'register' && <RegisterTechnician showList={false} showForm={true} />}
       </div>
     </div>
   )
