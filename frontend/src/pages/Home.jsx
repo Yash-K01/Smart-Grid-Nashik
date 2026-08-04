@@ -1,112 +1,42 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Home() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const dropdownRef = useRef(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userName, setUserName] = useState('')
+  const dropdownRef = useRef(null);
 
-  // Check authentication status from multiple possible storage locations
-  useEffect(() => {
-    const checkAuth = () => {
-      // Check all possible token locations
-      const adminToken = localStorage.getItem('admin_token')
-      const userToken = localStorage.getItem('user_token')
-      const techToken = localStorage.getItem('technician_token')
-      const activeRole = localStorage.getItem('active_role')
-      
-      // Also check old token format for backward compatibility
-      const oldToken = localStorage.getItem('token')
-      
-      let token = null
-      let userData = null
-      
-      // Check if any token exists
-      if (adminToken || userToken || techToken || oldToken) {
-        // Try to get user data from active role first
-        if (activeRole === 'admin' && adminToken) {
-          token = adminToken
-          userData = localStorage.getItem('admin_user')
-        } else if (activeRole === 'user' && userToken) {
-          token = userToken
-          userData = localStorage.getItem('user_user')
-        } else if (activeRole === 'technician' && techToken) {
-          token = techToken
-          userData = localStorage.getItem('technician_user')
-        } else if (oldToken) {
-          // Fallback to old format
-          token = oldToken
-          userData = localStorage.getItem('user')
-        } else if (adminToken) {
-          token = adminToken
-          userData = localStorage.getItem('admin_user')
-        } else if (userToken) {
-          token = userToken
-          userData = localStorage.getItem('user_user')
-        } else if (techToken) {
-          token = techToken
-          userData = localStorage.getItem('technician_user')
-        }
-        
-        if (userData) {
-          try {
-            const parsedUser = JSON.parse(userData)
-            setUserName(parsedUser.name || 'User')
-            setIsAuthenticated(true)
-          } catch (e) {
-            setIsAuthenticated(false)
-          }
-        } else {
-          setIsAuthenticated(false)
-        }
-      } else {
-        setIsAuthenticated(false)
-        setUserName('')
-      }
-    }
-    
-    checkAuth()
-    
-    // Listen for storage changes (when logout happens in another tab)
-    const handleStorageChange = () => {
-      checkAuth()
-    }
-    
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+  const {
+    user,
+    logout,
+    isAuthenticated,
+  } = useAuth();
 
-  const handleLogout = () => {
-    // Remove ALL possible authentication data
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_user')
-    localStorage.removeItem('user_token')
-    localStorage.removeItem('user_user')
-    localStorage.removeItem('technician_token')
-    localStorage.removeItem('technician_user')
-    localStorage.removeItem('active_role')
-    
-    // Force update state
-    setIsAuthenticated(false)
-    setUserName('')
-    
-    // Redirect to home
-    window.location.href = '/'
-  }
+  const [isDropdownOpen, setIsDropdownOpen] =
+    useState(false);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setIsDropdownOpen(false);
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
 
   return (
     <div>
@@ -213,12 +143,12 @@ function Home() {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center gap-3 bg-gray-100 px-4 py-2 rounded-xl">
                     <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                      {userName.charAt(0).toUpperCase()}
+                      {user?.name?.[0]?.toUpperCase() || "U"}
                     </div>
-                    <span className="text-gray-700 font-semibold">{userName}</span>
+                    <span className="text-gray-700 font-semibold">{user?.name || "User"}</span>
                   </div>
                   <button
-                    onClick={handleLogout}
+                    onClick={logout}
                     className="bg-red-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-red-600 transition active:scale-95 shadow-lg shadow-red-900/20"
                   >
                     Logout

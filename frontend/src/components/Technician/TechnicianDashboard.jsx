@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Home, ClipboardList, CheckCircle, LogOut, Clock, TrendingUp, AlertCircle, User, Wrench } from 'lucide-react'
-import axios from 'axios'
 import toast from 'react-hot-toast'
 import ViewAssignments from './ViewAssignments'
 import NotificationBell from '../NotificationBell'
-import { API_URL } from '../../config/api'
+import API from '../../config/api' // Use API instance instead of axios
 
 function TechnicianDashboard() {
   const { user, logout } = useAuth()
@@ -19,6 +18,7 @@ function TechnicianDashboard() {
     total: 0
   })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   // Get user data from localStorage as fallback
   const getUserData = () => {
@@ -44,15 +44,36 @@ function TechnicianDashboard() {
     return () => clearInterval(interval)
   }, [])
 
+  const handleError = (error) => {
+    console.error('Error:', error)
+    if (!error.response) {
+      toast.error('Network Error - Please check your connection')
+    } else if (error.response.status === 401) {
+      toast.error('Session expired - Please login again')
+      logout()
+      navigate('/login')
+    } else {
+      toast.error(error.response?.data?.message || 'Something went wrong')
+    }
+  }
+
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_URL}/technician/stats`, {
+      if (!token) {
+        toast.error('Please login again')
+        navigate('/login')
+        return
+      }
+
+      const response = await API.get('/technician/stats', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setStats(response.data)
+      setError(null)
     } catch (error) {
-      console.error('Error fetching stats:', error)
+      handleError(error)
+      setError('Failed to load statistics')
     } finally {
       setLoading(false)
     }
@@ -63,12 +84,30 @@ function TechnicianDashboard() {
     navigate('/')
   }
 
+  // Navigation items configuration
+  const navItems = [
+    {
+      id: 'assignments',
+      label: 'View Assignments',
+      icon: ClipboardList,
+      badge: stats.assigned > 0 ? stats.assigned : null,
+      badgeColor: 'bg-yellow-500'
+    },
+    {
+      id: 'update',
+      label: 'Update Status',
+      icon: TrendingUp,
+      badge: stats.inProgress > 0 ? stats.inProgress : null,
+      badgeColor: 'bg-blue-500'
+    }
+  ]
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading dashboard...</p>
+          <div className="w-14 h-14 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 text-lg">Loading dashboard...</p>
         </div>
       </div>
     )
@@ -78,7 +117,8 @@ function TechnicianDashboard() {
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-green-800 to-teal-800 text-white shadow-2xl pt-16">
-        <div className="p-6">
+        <div className="p-6 h-full flex flex-col">
+          {/* Logo */}
           <div className="flex items-center space-x-3 mb-10 pb-6 border-b border-white/20">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
               <Wrench className="w-6 h-6 text-green-600" />
@@ -89,64 +129,56 @@ function TechnicianDashboard() {
             </div>
           </div>
 
-          {/* Technician Info - FIXED */}
+          {/* Technician Info */}
           <div className="mb-8 p-4 bg-white/10 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-xl font-bold">
                 {displayInitial}
               </div>
-              <div>
-                <p className="font-semibold">{displayName}</p>
-                <p className="text-xs text-green-200">{displayEmail}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">{displayName}</p>
+                <p className="text-xs text-green-200 truncate">{displayEmail}</p>
               </div>
             </div>
           </div>
 
-          <nav className="space-y-2">
-            <button
-              onClick={() => setActiveTab('assignments')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'assignments' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <ClipboardList className="w-5 h-5" />
-                <span>View Assignments</span>
-              </div>
-              {stats.assigned > 0 && (
-                <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-                  {stats.assigned}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('update')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'update' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <TrendingUp className="w-5 h-5" />
-                <span>Update Status</span>
-              </div>
-              {stats.inProgress > 0 && (
-                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                  {stats.inProgress}
-                </span>
-              )}
-            </button>
+          {/* Navigation */}
+          <nav className="flex-1 space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                    isActive ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge !== null && (
+                    <span className={`${item.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </nav>
-        </div>
 
-        <div className="absolute bottom-0 w-72 p-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
+          {/* Logout Button */}
+          <div className="pt-4 border-t border-white/20">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -155,9 +187,57 @@ function TechnicianDashboard() {
         <NotificationBell />
       </div>
 
+      {/* Main Content */}
       <div className="ml-72">
-        {activeTab === 'assignments' && <ViewAssignments mode="all" />}
-        {activeTab === 'update' && <ViewAssignments mode="update" />}
+        {/* Stats Bar */}
+        <div className="bg-white shadow-md p-4 border-b">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {activeTab === 'assignments' ? '📋 My Assignments' : '🔄 Update Status'}
+              </h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Assigned:</span>
+                <span className="font-semibold text-yellow-600">{stats.assigned}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">In Progress:</span>
+                <span className="font-semibold text-blue-600">{stats.inProgress}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Completed:</span>
+                <span className="font-semibold text-green-600">{stats.completed}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Total:</span>
+                <span className="font-semibold text-gray-800">{stats.total}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-8">
+          {error ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+              <p className="text-red-600 font-semibold">{error}</p>
+              <button
+                onClick={fetchStats}
+                className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'assignments' && <ViewAssignments mode="all" />}
+              {activeTab === 'update' && <ViewAssignments mode="update" />}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

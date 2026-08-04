@@ -1,391 +1,567 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { User, Phone, MapPin, Zap, Mail, Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { API_URL } from '../config/api'
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  User,
+  Phone,
+  MapPin,
+  Zap,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 function Register() {
-  const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const { register } = useAuth();
+
+  const [loading, setLoading] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
   const [formData, setFormData] = useState({
-    name: '',
-    mobile: '',
-    address: '',
-    meterNumber: '',
-    area: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  })
+    name: "",
+    mobile: "",
+    address: "",
+    meterNumber: "",
+    area: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+  });
 
   const areas = [
-    'Nashik Road', 'College Road', 'Gangapur Road', 'Panchavati', 'Satpur',
-    'Ambad', 'Cidco', 'Indira Nagar', 'Mhasrul', 'Pathardi', 'Untwadi',
-    'Mahatma Nagar', 'Gandhi Nagar', 'Sharanpur Road', 'Canada Corner',
-    'Mumbai Naka', 'Deolali Camp', 'Ozar', 'Vilholi', 'Adgaon'
-  ]
+    "Nashik Road",
+    "College Road",
+    "Gangapur Road",
+    "Panchavati",
+    "Satpur",
+    "Ambad",
+    "Cidco",
+    "Indira Nagar",
+    "Mhasrul",
+    "Pathardi",
+    "Untwadi",
+    "Mahatma Nagar",
+    "Gandhi Nagar",
+    "Sharanpur Road",
+    "Canada Corner",
+    "Mumbai Naka",
+    "Deolali Camp",
+    "Ozar",
+    "Vilholi",
+    "Adgaon",
+  ];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   const validateForm = () => {
-    if (!formData.name) {
-      toast.error('Please enter your full name')
-      return false
+    if (!formData.name.trim()) {
+      toast.error("Full name is required");
+      return false;
     }
-    if (!formData.mobile || formData.mobile.length !== 10) {
-      toast.error('Please enter a valid 10-digit mobile number')
-      return false
+
+    if (!/^[0-9]{10}$/.test(formData.mobile)) {
+      toast.error("Enter a valid 10-digit mobile number");
+      return false;
     }
-    if (!formData.address) {
-      toast.error('Please enter your address')
-      return false
+
+    if (!formData.address.trim()) {
+      toast.error("Address is required");
+      return false;
     }
-    if (!formData.meterNumber) {
-      toast.error('Please enter your meter number')
-      return false
+
+    if (!formData.meterNumber.trim()) {
+      toast.error("Meter number is required");
+      return false;
     }
+
     if (!formData.area) {
-      toast.error('Please select your area')
-      return false
+      toast.error("Please select your area");
+      return false;
     }
-    if (!formData.email || !formData.email.includes('@')) {
-      toast.error('Please enter a valid email address')
-      return false
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      toast.error("Enter a valid email");
+      return false;
     }
-    if (!formData.password || formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters')
-      return false
+
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return false;
     }
+
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match')
-      return false
+      toast.error("Passwords do not match");
+      return false;
     }
-    return true
-  }
+
+    return true;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
-    
-    setLoading(true)
-    
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          mobile: formData.mobile,
-          address: formData.address,
-          meterNumber: formData.meterNumber,
-          area: formData.area,
-          email: formData.email,
-          password: formData.password
-        }),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        toast.success('Registration successful! Please login.')
-        setTimeout(() => {
-          navigate('/login')
-        }, 2000)
-      } else {
-        toast.error(data.message || 'Registration failed')
-      }
-    } catch (error) {
-      toast.success('Registration successful! Please login.')
-      setTimeout(() => {
-        navigate('/login')
-      }, 2000)
+      await register({
+        name: formData.name,
+        mobile: formData.mobile,
+        address: formData.address,
+        meterNumber: formData.meterNumber,
+        area: formData.area,
+        email: formData.email,
+        password: formData.password,
+        role: "user",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={`${API_URL}/background.jpg`} 
-          className="w-full h-full object-cover" 
-          alt="Background"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-purple-900/80 to-slate-900/90"></div>
-      </div>
 
-      {/* Animated Glow Orbs */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
+  {/* Background */}
 
-      <div className="relative z-10 min-h-screen py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Back to Home Button */}
-            <Link 
-              to="/" 
-              className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 transition-all duration-300 hover:-translate-x-1 group"
-            >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-              <span className="text-sm">Back to Home</span>
-            </Link>
+  <div className="absolute inset-0">
 
-            {/* Registration Card */}
-            <div className="relative">
-              {/* Subtle Glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl blur opacity-30"></div>
-              
-              {/* Main Card */}
-              <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">Create Account</h2>
-                      <p className="text-white/70 text-sm mt-0.5">Join SmartGrid Nashik</p>
-                    </div>
-                  </div>
+    <img
+      src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1920&q=80"
+      alt="Background"
+      className="w-full h-full object-cover"
+    />
+
+    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-indigo-900/80 to-black/90"></div>
+
+    <div className="absolute top-0 left-0 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
+
+    <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+
+  </div>
+
+  <div className="relative z-10 py-20">
+
+    <div className="container mx-auto px-4">
+
+      <div className="max-w-5xl mx-auto">
+
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-white hover:text-blue-300 transition mb-6"
+        >
+          <ArrowLeft size={18} />
+          Back to Home
+        </Link>
+
+        <div className="rounded-3xl overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
+
+          {/* Header */}
+
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-7">
+
+            <div className="flex items-center gap-4">
+
+              <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
+
+                <User className="text-white w-7 h-7" />
+
+              </div>
+
+              <div>
+
+                <h1 className="text-3xl font-bold text-white">
+                  Create Account
+                </h1>
+
+                <p className="text-white/80">
+                  Register as a SmartGrid User
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="p-8"
+          >
+
+            <div className="grid md:grid-cols-2 gap-5">
+
+              {/* Name */}
+
+              <div>
+
+                <label className="block text-white mb-2">
+                  Full Name
+                </label>
+
+                <div className="relative">
+
+                  <User
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
+
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none focus:border-indigo-400"
+                  />
+
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8">
-                  <div className="grid md:grid-cols-2 gap-5">
-                    {/* Full Name */}
-                    <div>
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Full Name <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                          type="text"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          required
-                          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all"
-                          placeholder="Enter your full name"
-                        />
-                      </div>
-                    </div>
+              </div>
 
-                    {/* Mobile Number */}
-                    <div>
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Mobile Number <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                          type="tel"
-                          name="mobile"
-                          value={formData.mobile}
-                          onChange={handleChange}
-                          required
-                          maxLength="10"
-                          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all"
-                          placeholder="10-digit mobile number"
-                        />
-                      </div>
-                    </div>
+              {/* Mobile */}
 
-                    {/* Address - Full width */}
-                    <div className="md:col-span-2">
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Complete Address <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <MapPin className="absolute left-3 top-3 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <textarea
-                          name="address"
-                          value={formData.address}
-                          onChange={handleChange}
-                          required
-                          rows="2"
-                          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all resize-none"
-                          placeholder="House No., Street, Landmark, City - 422001"
-                        />
-                      </div>
-                    </div>
+              <div>
 
-                    {/* Meter Number */}
-                    <div>
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Meter Number <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Zap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                          type="text"
-                          name="meterNumber"
-                          value={formData.meterNumber}
-                          onChange={handleChange}
-                          required
-                          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all"
-                          placeholder="Your electricity meter number"
-                        />
-                      </div>
-                    </div>
+                <label className="block text-white mb-2">
+                  Mobile Number
+                </label>
 
-                    {/* Area - Nashik Areas Dropdown */}
-                    <div>
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Area / Locality <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <select
-                          name="area"
-                          value={formData.area}
-                          onChange={handleChange}
-                          required
-                          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white outline-none transition-all cursor-pointer appearance-none"
-                        >
-                          <option value="" className="bg-slate-800">Select your area</option>
-                          {areas.map(area => (
-                            <option key={area} value={area} className="bg-slate-800">{area}</option>
-                          ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          <svg className="w-4 h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
+                <div className="relative">
 
-                    {/* Email Address */}
-                    <div className="md:col-span-2">
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Email Address <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          required
-                          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all"
-                          placeholder="your@email.com"
-                        />
-                      </div>
-                    </div>
+                  <Phone
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
 
-                    {/* Password */}
-                    <div>
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Password <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          name="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          required
-                          className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all"
-                          placeholder="Min. 6 characters"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
+                  <input
+                    type="text"
+                    name="mobile"
+                    maxLength={10}
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    placeholder="9876543210"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none focus:border-indigo-400"
+                  />
 
-                    {/* Confirm Password */}
-                    <div>
-                      <label className="block text-white/80 font-medium mb-1.5 text-sm">
-                        Confirm Password <span className="text-pink-400">*</span>
-                      </label>
-                      <div className="relative group">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          name="confirmPassword"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          required
-                          className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-white placeholder-white/30 outline-none transition-all"
-                          placeholder="Confirm your password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
-                        >
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                </div>
 
-                  {/* Terms and Conditions */}
-                  <div className="mt-6 p-3.5 bg-white/5 rounded-xl border border-white/10">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        required 
-                        className="w-4 h-4 rounded border-white/30 bg-white/10 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer" 
-                      />
-                      <span className="text-white/70 text-sm group-hover:text-white/90 transition-colors">
-                        I agree to the <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium">Terms of Service</a> and 
-                        <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium ml-1">Privacy Policy</a>
-                      </span>
-                    </label>
-                  </div>
+              </div>
 
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3.5 rounded-xl font-semibold text-base transition-all duration-300 transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg shadow-indigo-500/20"
+              {/* Address */}
+
+              <div className="md:col-span-2">
+
+                <label className="block text-white mb-2">
+                  Address
+                </label>
+
+                <div className="relative">
+
+                  <MapPin
+                    className="absolute left-4 top-4 text-gray-300"
+                    size={18}
+                  />
+
+                  <textarea
+                    rows={3}
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Enter complete address"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none resize-none focus:border-indigo-400"
+                  />
+
+                </div>
+
+              </div>
+
+              {/* Meter */}
+
+              <div>
+
+                <label className="block text-white mb-2">
+                  Meter Number
+                </label>
+
+                <div className="relative">
+
+                  <Zap
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
+
+                  <input
+                    type="text"
+                    name="meterNumber"
+                    value={formData.meterNumber}
+                    onChange={handleChange}
+                    placeholder="Enter meter number"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none focus:border-indigo-400"
+                  />
+
+                </div>
+
+              </div>
+
+              {/* Area */}
+
+              <div>
+
+                <label className="block text-white mb-2">
+                  Area
+                </label>
+
+                <div className="relative">
+
+                  <MapPin
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
+
+                  <select
+                    name="area"
+                    value={formData.area}
+                    onChange={handleChange}
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white outline-none appearance-none"
                   >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Creating Account...
-                      </span>
+
+                    <option value="" className="bg-slate-900">
+                      Select Area
+                    </option>
+
+                    {areas.map((area) => (
+
+                      <option
+                        key={area}
+                        value={area}
+                        className="bg-slate-900"
+                      >
+                        {area}
+                      </option>
+
+                    ))}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+                            {/* Email */}
+
+              <div className="md:col-span-2">
+
+                <label className="block text-white mb-2">
+                  Email Address
+                </label>
+
+                <div className="relative">
+
+                  <Mail
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
+
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none focus:border-indigo-400"
+                  />
+
+                </div>
+
+              </div>
+
+              {/* Password */}
+
+              <div>
+
+                <label className="block text-white mb-2">
+                  Password
+                </label>
+
+                <div className="relative">
+
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
+
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Minimum 6 characters"
+                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none focus:border-indigo-400"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPassword(!showPassword)
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} />
                     ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        <User className="w-4 h-4" />
-                        Create Account
-                      </span>
+                      <Eye size={18} />
                     )}
                   </button>
 
-                  {/* Login Link */}
-                  <p className="text-center text-white/60 text-sm mt-6">
-                    Already have an account?{' '}
-                    <Link to="/login" className="text-indigo-400 font-medium hover:text-indigo-300 hover:underline transition-colors">
-                      Sign in here
-                    </Link>
-                  </p>
-                </form>
+                </div>
+
               </div>
+
+              {/* Confirm Password */}
+
+              <div>
+
+                <label className="block text-white mb-2">
+                  Confirm Password
+                </label>
+
+                <div className="relative">
+
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                    size={18}
+                  />
+
+                  <input
+                    type={
+                      showConfirmPassword
+                        ? "text"
+                        : "password"
+                    }
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirm password"
+                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-gray-400 outline-none focus:border-indigo-400"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowConfirmPassword(
+                        !showConfirmPassword
+                      )
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+
+                </div>
+
+              </div>
+
             </div>
-          </div>
+
+            {/* Terms */}
+
+            <div className="mt-7 bg-white/5 border border-white/10 rounded-xl p-4">
+
+              <label className="flex items-start gap-3 cursor-pointer">
+
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-1"
+                />
+
+                <span className="text-sm text-gray-300">
+
+                  I agree to the
+
+                  <span className="text-indigo-400">
+                    {" "}
+                    Terms of Service
+                  </span>
+
+                  {" "}and{" "}
+
+                  <span className="text-indigo-400">
+                    Privacy Policy
+                  </span>
+
+                </span>
+
+              </label>
+
+            </div>
+
+            {/* Submit */}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-7 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold hover:scale-[1.02] transition disabled:opacity-60"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+
+                  <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+
+                  Creating Account...
+
+                </span>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+
+            {/* Login */}
+
+            <p className="text-center text-gray-300 mt-7">
+
+              Already have an account?
+
+              <Link
+                to="/login"
+                className="ml-2 text-indigo-400 hover:underline"
+              >
+                Login
+              </Link>
+
+            </p>
+
+          </form>
+
         </div>
+
       </div>
+
     </div>
-  )
+
+  </div>
+
+</div>
+  );
 }
 
-export default Register
+export default Register;
