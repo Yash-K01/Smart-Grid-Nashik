@@ -25,20 +25,12 @@ function ManageComplaints({ refreshDashboard }) {
   const [assigning, setAssigning] = useState(false)
   const [selectedTechnician, setSelectedTechnician] = useState(null)
 
-  // Helper function to get image URL
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null
-    // If it's already a full URL, return as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl
-    }
-    // Remove leading slash if present to avoid double slashes
-    const cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl
-    // Use the baseURL from API instance
-    const baseURL = API.defaults.baseURL
-    // Remove trailing slash from baseURL if present
-    const cleanBase = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL
-    return `${cleanBase}/${cleanPath}`
+  // Helper function to ensure data is always an array
+  const ensureArray = (data) => {
+    if (Array.isArray(data)) return data
+    if (data?.data && Array.isArray(data.data)) return data.data
+    if (data?.complaints && Array.isArray(data.complaints)) return data.complaints
+    return []
   }
 
   useEffect(() => {
@@ -54,11 +46,14 @@ function ManageComplaints({ refreshDashboard }) {
     setLoading(true)
     try {
       const response = await API.get('/admin/complaints')
-      setComplaints(response.data)
-      setFilteredComplaints(response.data)
+      const data = ensureArray(response.data)
+      setComplaints(data)
+      setFilteredComplaints(data)
     } catch (error) {
       console.error('Error fetching complaints:', error)
       toast.error(error.response?.data?.message || 'Failed to load complaints')
+      setComplaints([])
+      setFilteredComplaints([])
     } finally {
       setLoading(false)
     }
@@ -67,12 +62,14 @@ function ManageComplaints({ refreshDashboard }) {
   const fetchTechnicians = async () => {
     try {
       const response = await API.get('/admin/technicians')
+      const data = ensureArray(response.data)
       // Filter only available technicians
-      const availableTechs = response.data.filter(tech => tech.status === 'available')
+      const availableTechs = data.filter(tech => tech.status === 'available')
       setTechnicians(availableTechs)
     } catch (error) {
       console.error('Error fetching technicians:', error)
       toast.error(error.response?.data?.message || 'Failed to load technicians')
+      setTechnicians([])
     }
   }
 
@@ -338,22 +335,6 @@ function ManageComplaints({ refreshDashboard }) {
                   </div>
                 )}
 
-                {/* Image Display - Using getImageUrl helper */}
-                {complaint.imageUrl && (
-                  <div className="mb-4">
-                    <p className="text-gray-600 text-sm font-semibold">📷 Complaint Image:</p>
-                    <img 
-                      src={getImageUrl(complaint.imageUrl)} 
-                      alt="Complaint" 
-                      className="max-h-48 rounded-lg mt-1 border border-gray-200 shadow-sm"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/200x150?text=No+Image';
-                      }}
-                    />
-                  </div>
-                )}
-
                 {/* Progress Bar */}
                 <div className="mt-4">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -400,18 +381,6 @@ function ManageComplaints({ refreshDashboard }) {
                 <p className="text-gray-600"><span className="font-semibold">Type:</span> {selectedComplaint.complaintType}</p>
                 <p className="text-gray-600"><span className="font-semibold">Customer:</span> {selectedComplaint.userId?.name || 'N/A'}</p>
               </div>
-              
-              {/* Image in Assign Modal */}
-              {selectedComplaint.imageUrl && (
-                <div className="mb-4">
-                  <p className="text-gray-600 text-sm font-semibold">📷 Complaint Image:</p>
-                  <img 
-                    src={getImageUrl(selectedComplaint.imageUrl)} 
-                    alt="Complaint" 
-                    className="max-h-32 rounded-lg mt-1 border border-gray-200"
-                  />
-                </div>
-              )}
               
               <label className="block text-gray-700 font-semibold mb-2">Select Technician:</label>
               <div className="space-y-2 max-h-60 overflow-y-auto">

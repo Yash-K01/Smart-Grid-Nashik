@@ -13,11 +13,14 @@ function NotificationBell() {
 
   const handleError = (error) => {
     console.error('Notification Error:', error)
+    // Don't show toast for 404 errors
+    if (error.response?.status === 404) {
+      return // Silent fail for 404
+    }
     if (!error.response) {
       toast.error("Network Error - Please check your connection")
     } else if (error.response.status === 401) {
       toast.error("Session expired - Please login again")
-      // Optionally redirect to login
     } else {
       toast.error(
         error.response.data?.message || 
@@ -50,16 +53,19 @@ function NotificationBell() {
       clearInterval(interval)
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isOpen]) // Added isOpen to dependency
+  }, [isOpen])
 
   const fetchNotifications = async () => {
     setLoading(true)
     try {
       const response = await API.get("/notifications")
-      setNotifications(response.data || [])
+      setNotifications(response.data?.data || response.data || [])
     } catch (error) {
-      handleError(error)
-      setNotifications([]) // Set empty array on error
+      // Don't show toast for 404 errors
+      if (error.response?.status !== 404) {
+        handleError(error)
+      }
+      setNotifications([])
     } finally {
       setLoading(false)
     }
@@ -70,8 +76,11 @@ function NotificationBell() {
       const response = await API.get("/notifications/unread-count")
       setUnreadCount(response.data?.count || 0)
     } catch (error) {
-      handleError(error)
-      setUnreadCount(0) // Set 0 on error
+      // Don't show toast for 404 errors
+      if (error.response?.status !== 404) {
+        handleError(error)
+      }
+      setUnreadCount(0)
     }
   }
 
@@ -89,7 +98,9 @@ function NotificationBell() {
       
       toast.success('Marked as read')
     } catch (error) {
-      handleError(error)
+      if (error.response?.status !== 404) {
+        handleError(error)
+      }
       // Refresh on error to sync state
       await fetchNotifications()
       await fetchUnreadCount()
@@ -109,7 +120,9 @@ function NotificationBell() {
       
       toast.success('All notifications marked as read')
     } catch (error) {
-      handleError(error)
+      if (error.response?.status !== 404) {
+        handleError(error)
+      }
       // Refresh on error to sync state
       await fetchNotifications()
       await fetchUnreadCount()
@@ -132,7 +145,9 @@ function NotificationBell() {
       
       toast.success("Notification deleted")
     } catch (error) {
-      handleError(error)
+      if (error.response?.status !== 404) {
+        handleError(error)
+      }
       // Refresh on error to sync state
       await fetchNotifications()
       await fetchUnreadCount()
@@ -141,10 +156,11 @@ function NotificationBell() {
 
   const getNotificationIcon = (title, type) => {
     // Check by type first if available
-    if (type === 'assignment') return <UserPlus className="w-4 h-4 text-blue-500" />
-    if (type === 'started') return <Clock className="w-4 h-4 text-purple-500" />
-    if (type === 'resolved') return <CheckCircle className="w-4 h-4 text-green-500" />
-    if (type === 'rejected') return <XCircle className="w-4 h-4 text-red-500" />
+    if (type === 'ASSIGNED' || type === 'assignment') return <UserPlus className="w-4 h-4 text-blue-500" />
+    if (type === 'STATUS_UPDATED' || type === 'started') return <Clock className="w-4 h-4 text-purple-500" />
+    if (type === 'COMPLETED' || type === 'resolved') return <CheckCircle className="w-4 h-4 text-green-500" />
+    if (type === 'REJECTED' || type === 'rejected') return <XCircle className="w-4 h-4 text-red-500" />
+    if (type === 'NEW_COMPLAINT') return <Mail className="w-4 h-4 text-indigo-500" />
     
     // Fallback to title
     if (title?.includes('Assigned') || title?.includes('assign')) 

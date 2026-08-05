@@ -2,11 +2,12 @@ import axios from "axios";
 
 // Create Axios Instance
 const API = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', // Added fallback
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: 10000,
+    timeout: 30000, // Increased from 10000 to 30000
+    withCredentials: true, // Added for CORS
 });
 
 // ================================

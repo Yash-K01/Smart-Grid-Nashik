@@ -18,6 +18,24 @@ router.get(
 );
 
 // ==================================
+// Get Unread Count - ADD THIS ROUTE
+// ==================================
+router.get(
+    "/unread-count",
+    protect,
+    notificationController.getUnreadCount
+);
+
+// ==================================
+// Mark All as Read - ADD THIS ROUTE
+// ==================================
+router.put(
+    "/mark-all-read",
+    protect,
+    notificationController.markAllRead
+);
+
+// ==================================
 // Mark Notification Read
 // ==================================
 router.put(

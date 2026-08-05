@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { UserPlus, Trash2, Mail, Phone, MapPin, GraduationCap, Briefcase, Eye, EyeOff, RefreshCw } from 'lucide-react'
-import API from '../../config/api' // Use API instance instead of axios
+import API from '../../config/api'
 
 function RegisterTechnician({ showList = true, showForm = true, refreshDashboard }) {
   const [technicians, setTechnicians] = useState([])
@@ -26,6 +26,14 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
     'Ozar', 'Vilholi', 'Adgaon'
   ]
 
+  // Helper function to ensure data is always an array
+  const ensureArray = (data) => {
+    if (Array.isArray(data)) return data
+    if (data?.data && Array.isArray(data.data)) return data.data
+    if (data?.technicians && Array.isArray(data.technicians)) return data.technicians
+    return []
+  }
+
   useEffect(() => {
     if (showList) {
       fetchTechnicians()
@@ -35,19 +43,13 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
   const fetchTechnicians = async () => {
     setFetching(true)
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        toast.error('Please login again')
-        return
-      }
-
-      const response = await API.get('/admin/technicians', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setTechnicians(response.data)
+      const response = await API.get('/admin/technicians')
+      const data = ensureArray(response.data)
+      setTechnicians(data)
     } catch (error) {
       console.error('Error fetching technicians:', error)
       toast.error(error.response?.data?.message || 'Failed to fetch technicians')
+      setTechnicians([])
     } finally {
       setFetching(false)
     }
@@ -89,19 +91,10 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
     setLoading(true)
     
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        toast.error('Please login again')
-        return
-      }
-
-      await API.post('/admin/technician', formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await API.post('/admin/technician', formData)
       
       toast.success('Technician registered successfully!')
       
-      // Reset form
       setFormData({ 
         name: '', 
         education: '', 
@@ -112,12 +105,10 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
         password: '' 
       })
       
-      // Refresh lists
       if (showList) {
         fetchTechnicians()
       }
       
-      // Refresh dashboard if callback provided
       if (refreshDashboard) {
         refreshDashboard()
       }
@@ -136,23 +127,13 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
     }
 
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        toast.error('Please login again')
-        return
-      }
-
-      await API.delete(`/admin/technician/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      
+      await API.delete(`/admin/technician/${id}`)
       toast.success('Technician deleted successfully')
       
       if (showList) {
         fetchTechnicians()
       }
       
-      // Refresh dashboard if callback provided
       if (refreshDashboard) {
         refreshDashboard()
       }
@@ -180,7 +161,7 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Registration Form - Only show if showForm is true */}
+        {/* Registration Form */}
         {showForm && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
@@ -299,7 +280,7 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
           </div>
         )}
 
-        {/* Technicians List - Only show if showList is true */}
+        {/* Technicians List */}
         {showList && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="bg-gray-800 px-6 py-4 flex justify-between items-center">

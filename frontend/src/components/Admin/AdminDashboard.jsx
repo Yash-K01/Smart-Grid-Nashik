@@ -1,3 +1,4 @@
+// AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -37,6 +38,14 @@ function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Helper function to safely convert to number
+  const safeNumber = (value) => {
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  };
+
   const [stats, setStats] = useState({
     totalComplaints: 0,
     pendingComplaints: 0,
@@ -47,55 +56,101 @@ function AdminDashboard() {
     totalUsers: 0,
     resolutionRate: 0,
   });
+
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [areaData, setAreaData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
+  // Ensure pieData is always an array with safe values
   const pieData = [
-    { name: "Pending", value: stats.pendingComplaints },
-    { name: "Assigned", value: stats.assignedComplaints },
-    { name: "In Progress", value: stats.inProgressComplaints },
-    { name: "Completed", value: stats.completedComplaints },
+    { name: "Pending", value: safeNumber(stats.pendingComplaints) },
+    { name: "Assigned", value: safeNumber(stats.assignedComplaints) },
+    { name: "In Progress", value: safeNumber(stats.inProgressComplaints) },
+    { name: "Completed", value: safeNumber(stats.completedComplaints) },
   ].filter((item) => item.value > 0);
 
   const handleError = (error) => {
-    console.error(error);
-    toast.error(error.response?.data?.message || "Failed to load dashboard");
+    console.error("Dashboard Error:", error);
+    const message = error.response?.data?.message || error.message || "Failed to load dashboard";
+    toast.error(message);
+    setError(message);
   };
+
+  useEffect(() => {
+    fetchAllData();
+    
+  }, []);
 
   const fetchAllData = async () => {
     setLoading(true);
+    setError(null);
+
     try {
-      const [statsRes, recentRes, areaRes, monthlyRes] = await Promise.all([
+      // Use Promise.allSettled to handle partial failures
+      const results = await Promise.allSettled([
         API.get("/admin/stats"),
         API.get("/admin/complaints/recent"),
         API.get("/admin/complaints/by-area"),
         API.get("/admin/complaints/monthly"),
       ]);
 
-      setStats(statsRes.data);
-      setRecentComplaints(recentRes.data);
-      setAreaData(areaRes.data);
-      setMonthlyData(monthlyRes.data);
+      // Handle stats with safe number conversion
+      if (results[0].status === 'fulfilled') {
+        const data = results[0].value.data;
+        setStats({
+          totalComplaints: safeNumber(data.totalComplaints),
+          pendingComplaints: safeNumber(data.pendingComplaints),
+          assignedComplaints: safeNumber(data.assignedComplaints),
+          inProgressComplaints: safeNumber(data.inProgressComplaints),
+          completedComplaints: safeNumber(data.completedComplaints),
+          totalTechnicians: safeNumber(data.totalTechnicians),
+          totalUsers: safeNumber(data.totalUsers),
+          resolutionRate: safeNumber(data.resolutionRate),
+        });
+      } else {
+        console.error('Failed to fetch stats:', results[0].reason);
+        // Keep default stats (all 0)
+      }
+
+      // Handle recent complaints - ENSURE IT'S AN ARRAY
+      if (results[1].status === 'fulfilled') {
+        const data = results[1].value.data;
+        setRecentComplaints(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch recent complaints:', results[1].reason);
+        setRecentComplaints([]);
+      }
+
+      // Handle area data - ENSURE IT'S AN ARRAY
+      if (results[2].status === 'fulfilled') {
+        const data = results[2].value.data;
+        setAreaData(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch area data:', results[2].reason);
+        setAreaData([]);
+      }
+
+      // Handle monthly data - ENSURE IT'S AN ARRAY
+      if (results[3].status === 'fulfilled') {
+        const data = results[3].value.data;
+        setMonthlyData(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch monthly data:', results[3].reason);
+        setMonthlyData([]);
+      }
+
     } catch (error) {
       handleError(error);
+      // Set empty arrays on error
+      setRecentComplaints([]);
+      setAreaData([]);
+      setMonthlyData([]);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAllData();
-
-    // Auto Refresh Every 30 Seconds
-    const interval = setInterval(() => {
-      fetchAllData();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -117,8 +172,12 @@ function AdminDashboard() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-5"></div>
-          <h2 className="text-xl font-semibold text-gray-700">Loading Dashboard...</h2>
-          <p className="text-gray-500 mt-2">Please wait while we fetch the latest data.</p>
+          <h2 className="text-xl font-semibold text-gray-700">
+            Loading Dashboard...
+          </h2>
+          <p className="text-gray-500 mt-2">
+            Please wait while we fetch the latest data.
+          </p>
         </div>
       </div>
     );
@@ -148,7 +207,9 @@ function AdminDashboard() {
               </div>
               <div>
                 <p className="font-semibold">{user?.name || "Admin"}</p>
-                <p className="text-xs text-purple-200">{user?.email || "admin@smartgrid.com"}</p>
+                <p className="text-xs text-purple-200">
+                  {user?.email || "admin@smartgrid.com"}
+                </p>
               </div>
             </div>
           </div>
@@ -158,7 +219,9 @@ function AdminDashboard() {
             <button
               onClick={() => setActiveTab("dashboard")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                activeTab === "dashboard" ? "bg-white/20 shadow-lg" : "hover:bg-white/10"
+                activeTab === "dashboard"
+                  ? "bg-white/20 shadow-lg"
+                  : "hover:bg-white/10"
               }`}
             >
               <TrendingUp className="w-5 h-5" />
@@ -168,16 +231,18 @@ function AdminDashboard() {
             <button
               onClick={() => setActiveTab("complaints")}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition ${
-                activeTab === "complaints" ? "bg-white/20 shadow-lg" : "hover:bg-white/10"
+                activeTab === "complaints"
+                  ? "bg-white/20 shadow-lg"
+                  : "hover:bg-white/10"
               }`}
             >
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5" />
                 <span>Manage Complaints</span>
               </div>
-              {stats.pendingComplaints > 0 && (
+              {safeNumber(stats.pendingComplaints) > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  {stats.pendingComplaints}
+                  {safeNumber(stats.pendingComplaints)}
                 </span>
               )}
             </button>
@@ -185,7 +250,9 @@ function AdminDashboard() {
             <button
               onClick={() => setActiveTab("technicians")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                activeTab === "technicians" ? "bg-white/20 shadow-lg" : "hover:bg-white/10"
+                activeTab === "technicians"
+                  ? "bg-white/20 shadow-lg"
+                  : "hover:bg-white/10"
               }`}
             >
               <Users className="w-5 h-5" />
@@ -195,7 +262,9 @@ function AdminDashboard() {
             <button
               onClick={() => setActiveTab("register")}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
-                activeTab === "register" ? "bg-white/20 shadow-lg" : "hover:bg-white/10"
+                activeTab === "register"
+                  ? "bg-white/20 shadow-lg"
+                  : "hover:bg-white/10"
               }`}
             >
               <UserPlus className="w-5 h-5" />
@@ -225,6 +294,19 @@ function AdminDashboard() {
       <div className="ml-72">
         {activeTab === "dashboard" && (
           <div className="p-8">
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                <p className="text-red-600 text-sm">{error}</p>
+                <button
+                  onClick={fetchAllData}
+                  className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
               <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
@@ -232,7 +314,7 @@ function AdminDashboard() {
                   <div>
                     <p className="text-sm text-gray-500">Total Complaints</p>
                     <h2 className="text-3xl font-bold text-gray-800 mt-2">
-                      {stats.totalComplaints}
+                      {safeNumber(stats.totalComplaints)}
                     </h2>
                   </div>
                   <FileText className="w-12 h-12 text-indigo-500 opacity-60" />
@@ -244,7 +326,7 @@ function AdminDashboard() {
                   <div>
                     <p className="text-sm text-gray-500">Pending</p>
                     <h2 className="text-3xl font-bold text-yellow-600 mt-2">
-                      {stats.pendingComplaints}
+                      {safeNumber(stats.pendingComplaints)}
                     </h2>
                   </div>
                   <Clock className="w-12 h-12 text-yellow-500 opacity-60" />
@@ -256,7 +338,7 @@ function AdminDashboard() {
                   <div>
                     <p className="text-sm text-gray-500">In Progress</p>
                     <h2 className="text-3xl font-bold text-blue-600 mt-2">
-                      {stats.assignedComplaints + stats.inProgressComplaints}
+                      {safeNumber(stats.assignedComplaints) + safeNumber(stats.inProgressComplaints)}
                     </h2>
                   </div>
                   <AlertTriangle className="w-12 h-12 text-blue-500 opacity-60" />
@@ -268,7 +350,7 @@ function AdminDashboard() {
                   <div>
                     <p className="text-sm text-gray-500">Completed</p>
                     <h2 className="text-3xl font-bold text-green-600 mt-2">
-                      {stats.completedComplaints}
+                      {safeNumber(stats.completedComplaints)}
                     </h2>
                   </div>
                   <CheckCircle className="w-12 h-12 text-green-500 opacity-60" />
@@ -280,8 +362,10 @@ function AdminDashboard() {
             <div className="grid lg:grid-cols-2 gap-6 mb-8">
               {/* Area Chart */}
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Complaints by Area</h3>
-                {areaData.length > 0 ? (
+                <h3 className="text-lg font-bold text-gray-800 mb-6">
+                  Complaints by Area
+                </h3>
+                {areaData && areaData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={areaData}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -293,15 +377,17 @@ function AdminDashboard() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-72 flex items-center justify-center text-gray-500">
-                    No data available
+                    No area data available
                   </div>
                 )}
               </div>
 
               {/* Pie Chart */}
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">Complaint Status</h3>
-                {pieData.length > 0 ? (
+                <h3 className="text-lg font-bold text-gray-800 mb-6">
+                  Complaint Status
+                </h3>
+                {pieData && pieData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
                       <Pie
@@ -324,7 +410,7 @@ function AdminDashboard() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-72 flex items-center justify-center text-gray-500">
-                    No data available
+                    No complaint status data available
                   </div>
                 )}
               </div>
@@ -332,8 +418,10 @@ function AdminDashboard() {
 
             {/* Monthly Trends */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-              <h3 className="text-lg font-bold text-gray-800 mb-6">Monthly Complaint Trends</h3>
-              {monthlyData.length > 0 ? (
+              <h3 className="text-lg font-bold text-gray-800 mb-6">
+                Monthly Complaint Trends
+              </h3>
+              {monthlyData && monthlyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={320}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -341,8 +429,18 @@ function AdminDashboard() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="complaints" stroke="#6366F1" strokeWidth={3} />
-                    <Line type="monotone" dataKey="resolved" stroke="#22C55E" strokeWidth={3} />
+                    <Line
+                      type="monotone"
+                      dataKey="complaints"
+                      stroke="#6366F1"
+                      strokeWidth={3}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="resolved"
+                      stroke="#22C55E"
+                      strokeWidth={3}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -382,7 +480,7 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {recentComplaints.length === 0 ? (
+                    {!recentComplaints || recentComplaints.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="text-center py-10 text-gray-500">
                           No complaints found
@@ -392,20 +490,22 @@ function AdminDashboard() {
                       recentComplaints.map((complaint) => (
                         <tr key={complaint._id} className="hover:bg-gray-50 transition">
                           <td className="px-6 py-4">#{complaint._id?.slice(-6)}</td>
-                          <td className="px-6 py-4">{complaint.complaintType}</td>
+                          <td className="px-6 py-4">{complaint.complaintType || "N/A"}</td>
                           <td className="px-6 py-4">{complaint.userId?.name || "-"}</td>
                           <td className="px-6 py-4">{complaint.userId?.area || "-"}</td>
                           <td className="px-6 py-4">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                                complaint.status
+                                complaint.status || "Pending"
                               )}`}
                             >
-                              {complaint.status}
+                              {complaint.status || "Pending"}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-gray-500">
-                            {new Date(complaint.submittedAt).toLocaleDateString()}
+                            {complaint.submittedAt
+                              ? new Date(complaint.submittedAt).toLocaleDateString()
+                              : "N/A"}
                           </td>
                         </tr>
                       ))
@@ -427,14 +527,22 @@ function AdminDashboard() {
         {/* Technician List */}
         {activeTab === "technicians" && (
           <div className="p-8">
-            <RegisterTechnician showList={true} showForm={false} refreshDashboard={fetchAllData} />
+            <RegisterTechnician
+              showList={true}
+              showForm={false}
+              refreshDashboard={fetchAllData}
+            />
           </div>
         )}
 
         {/* Register Technician */}
         {activeTab === "register" && (
           <div className="p-8">
-            <RegisterTechnician showList={false} showForm={true} refreshDashboard={fetchAllData} />
+            <RegisterTechnician
+              showList={false}
+              showForm={true}
+              refreshDashboard={fetchAllData}
+            />
           </div>
         )}
       </div>
