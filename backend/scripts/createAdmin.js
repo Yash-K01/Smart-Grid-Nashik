@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const Admin = require('../models/Admin');
+require('dotenv').config();
 
 async function createAdmin() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/smartgrid');
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to MongoDB');
     
     // Delete existing admin
