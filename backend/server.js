@@ -42,35 +42,48 @@ const app = express();
 // ==========================
 app.use(morgan("dev"));
 app.use(limiter);
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(hpp());
 app.use(compression());
+
 // ==========================
-// CORS
+// CORS Configuration
 // ==========================
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   process.env.FRONTEND_URL,
+  "https://smart-grid-nashik.onrender.com", // Production frontend
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow requests with no origin (like mobile apps or server requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.warn(`Blocked by CORS: ${origin}`);
-      callback(null, true); // Change to callback(new Error(...)) in production
-    },
-    credentials: true,
-  })
-);
+    // Reject requests from disallowed origins
+    const errorMsg = `CORS policy: '${origin}' is not allowed to access this server.`;
+    console.warn(errorMsg);
+    
+    if (process.env.NODE_ENV === "production") {
+      callback(new Error(errorMsg));
+    } else {
+      // In development, allow with warning
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 86400, // 24 hours
+};
+
+app.use(cors(corsOptions));
 
 // ==========================
 // Upload Folder
