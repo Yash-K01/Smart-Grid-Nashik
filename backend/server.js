@@ -9,7 +9,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const hpp = require("hpp");
 const morgan = require("morgan");
 const compression = require("compression");
-const fileUpload = require("express-fileupload"); // ADD THIS
+const fileUpload = require("express-fileupload");
 
 const connectDB = require("./config/database");
 
@@ -21,7 +21,7 @@ dotenv.config();
 connectDB();
 
 // ==========================
-// Rate Limiter - Increased limit for development
+// Rate Limiter
 // ==========================
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -39,8 +39,8 @@ const app = express();
 // ==========================
 app.use(morgan("dev"));
 app.use(limiter);
-app.use(express.json({ limit: '50mb' })); // ADDED limit
-app.use(express.urlencoded({ extended: true, limit: '50mb' })); // ADDED limit
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
@@ -49,50 +49,49 @@ app.use(hpp());
 app.use(compression());
 
 // ==========================
-// File Upload Middleware - ADD THIS
+// File Upload Middleware
 // ==========================
 app.use(fileUpload({
     useTempFiles: true,
     tempFileDir: '/tmp/',
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    limits: { fileSize: 5 * 1024 * 1024 },
     abortOnLimit: true,
     responseOnLimit: 'File size exceeds 5MB limit',
     createParentPath: true
 }));
 
 // ==========================
-// CORS Configuration
+// CORS Configuration - CLEANED
 // ==========================
 const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    process.env.FRONTEND_URL,
+    "https://smart-grid-nashik.vercel.app", // ADDED: Your Vercel frontend
     "https://smart-grid-nashik.onrender.com",
+    process.env.FRONTEND_URL,
 ].filter(Boolean);
-
-const uniqueOrigins = [...new Set(allowedOrigins)];
 
 const corsOptions = {
     origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or server-to-server)
         if (!origin) {
             return callback(null, true);
         }
 
-        if (uniqueOrigins.includes(origin)) {
+        // Check if origin is allowed
+        if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
+        // In development, allow all origins
         if (process.env.NODE_ENV !== "production") {
             console.warn(`⚠️ CORS: Allowing development origin: ${origin}`);
             return callback(null, true);
         }
 
-        const errorMsg = `CORS policy: '${origin}' is not allowed to access this server.`;
-        console.warn(errorMsg);
-        callback(new Error(errorMsg));
+        // Reject in production
+        console.warn(`❌ CORS blocked: ${origin}`);
+        callback(new Error(`CORS policy: '${origin}' is not allowed`));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -109,7 +108,6 @@ app.use(cors(corsOptions));
 const uploadPath = path.join(__dirname, "uploads");
 const imagesPath = path.join(uploadPath, "images");
 
-// Create both directories
 if (!fs.existsSync(uploadPath)) {
     fs.mkdirSync(uploadPath, { recursive: true });
 }
@@ -117,7 +115,6 @@ if (!fs.existsSync(imagesPath)) {
     fs.mkdirSync(imagesPath, { recursive: true });
 }
 
-// Serve static files
 app.use("/uploads", express.static(uploadPath));
 
 // ==========================
@@ -178,7 +175,6 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
     console.error("❌ Error:", err);
 
-    // Handle file upload errors
     if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(413).json({
             success: false,
