@@ -3,29 +3,17 @@ const User = require("../models/User");
 const Technician = require("../models/Technician");
 const NotificationService = require("../services/notificationService");
 
+// ===========================
+// Get Dashboard Stats
+// ===========================
 exports.getDashboardStats = async (req, res) => {
     try {
-
         const totalComplaints = await Complaint.countDocuments();
-
-        const pending = await Complaint.countDocuments({
-            status: "Pending",
-        });
-
-        const assigned = await Complaint.countDocuments({
-            status: "Assigned",
-        });
-
-        const inProgress = await Complaint.countDocuments({
-            status: "InProgress",
-        });
-
-        const completed = await Complaint.countDocuments({
-            status: "Completed",
-        });
-
+        const pending = await Complaint.countDocuments({ status: "Pending" });
+        const assigned = await Complaint.countDocuments({ status: "Assigned" });
+        const inProgress = await Complaint.countDocuments({ status: "InProgress" });
+        const completed = await Complaint.countDocuments({ status: "Completed" });
         const technicians = await Technician.countDocuments();
-
         const users = await User.countDocuments();
 
         res.status(200).json({
@@ -40,57 +28,42 @@ exports.getDashboardStats = async (req, res) => {
                 users,
             },
         });
-
     } catch (error) {
-
         res.status(500).json({
             success: false,
             message: error.message,
         });
-
     }
 };
 
+// ===========================
+// Get Recent Complaints
+// ===========================
 exports.getRecentComplaints = async (req, res) => {
-
     try {
-
         const complaints = await Complaint.find()
-
             .populate("userId", "name area")
-
             .sort({ submittedAt: -1 })
-
             .limit(5);
 
         res.status(200).json({
-
             success: true,
-
             data: complaints,
-
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
             message: error.message,
-
         });
-
     }
-
 };
 
+// ===========================
+// Get Complaints by Area
+// ===========================
 exports.getComplaintByArea = async (req, res) => {
-
     try {
-
         const areaData = await Complaint.aggregate([
-
             {
                 $lookup: {
                     from: "users",
@@ -99,70 +72,47 @@ exports.getComplaintByArea = async (req, res) => {
                     as: "user",
                 },
             },
-
             { $unwind: "$user" },
-
             {
                 $group: {
                     _id: "$user.area",
-                    count: {
-                        $sum: 1,
-                    },
+                    count: { $sum: 1 },
                 },
             },
-
             {
-                $sort: {
-                    count: -1,
-                },
+                $sort: { count: -1 },
             },
-
             {
                 $limit: 5,
             },
-
         ]);
 
         const data = areaData.map((item) => ({
-
             area: item._id || "Unknown",
-
             count: item.count,
-
         }));
 
         res.status(200).json({
-
             success: true,
-
             data,
-
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
             message: error.message,
-
         });
-
     }
-
 };
 
+// ===========================
+// Get Monthly Complaints
+// ===========================
 exports.getMonthlyComplaints = async (req, res) => {
-
     try {
-
         const sixMonthsAgo = new Date();
-
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
 
         const monthlyData = await Complaint.aggregate([
-
             {
                 $match: {
                     submittedAt: {
@@ -170,127 +120,56 @@ exports.getMonthlyComplaints = async (req, res) => {
                     },
                 },
             },
-
             {
                 $group: {
-
                     _id: {
-
-                        year: {
-                            $year: "$submittedAt",
-                        },
-
-                        month: {
-                            $month: "$submittedAt",
-                        },
-
+                        year: { $year: "$submittedAt" },
+                        month: { $month: "$submittedAt" },
                     },
-
-                    complaints: {
-                        $sum: 1,
-                    },
-
+                    complaints: { $sum: 1 },
                     resolved: {
-
                         $sum: {
-
-                            $cond: [
-
-                                {
-                                    $eq: ["$status", "Completed"],
-                                },
-
-                                1,
-
-                                0,
-
-                            ],
-
+                            $cond: [{ $eq: ["$status", "Completed"] }, 1, 0],
                         },
-
                     },
-
                 },
-
             },
-
             {
-
                 $sort: {
-
                     "_id.year": 1,
-
                     "_id.month": 1,
-
                 },
-
             },
-
         ]);
 
         const months = [
-
-            "Jan",
-
-            "Feb",
-
-            "Mar",
-
-            "Apr",
-
-            "May",
-
-            "Jun",
-
-            "Jul",
-
-            "Aug",
-
-            "Sep",
-
-            "Oct",
-
-            "Nov",
-
-            "Dec",
-
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         ];
 
         const result = monthlyData.map((item) => ({
-
             month: months[item._id.month - 1],
-
             complaints: item.complaints,
-
             resolved: item.resolved,
-
         }));
 
         res.status(200).json({
-
             success: true,
-
             data: result,
-
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
             message: error.message,
-
         });
-
     }
-
 };
 
+// ===========================
+// Get All Complaints
+// ===========================
 exports.getAllComplaints = async (req, res) => {
     try {
-
         const complaints = await Complaint.find()
             .populate("userId", "name email mobile area")
             .populate("assignedTechnicianId", "name email contactNumber")
@@ -299,188 +178,141 @@ exports.getAllComplaints = async (req, res) => {
         res.status(200).json({
             success: true,
             count: complaints.length,
-            data: complaints
+            data: complaints,
         });
-
     } catch (error) {
-
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
-
     }
 };
 
+// ===========================
+// Get Complaint by ID
+// ===========================
 exports.getComplaintById = async (req, res) => {
-
     try {
-
         const complaint = await Complaint.findById(req.params.id)
             .populate("userId")
             .populate("assignedTechnicianId");
 
         if (!complaint) {
             return res.status(404).json({
-                success:false,
-                message:"Complaint not found"
+                success: false,
+                message: "Complaint not found",
             });
         }
 
         res.json({
-            success:true,
-            data:complaint
+            success: true,
+            data: complaint,
         });
-
-    } catch(error){
-
+    } catch (error) {
         res.status(500).json({
-            success:false,
-            message:error.message
+            success: false,
+            message: error.message,
         });
-
     }
-
 };
 
-exports.assignTechnician = async (req,res)=>{
+// ===========================
+// Assign Technician to Complaint
+// ===========================
+exports.assignTechnician = async (req, res) => {
+    try {
+        const { complaintId, technicianId } = req.body;
 
-try{
+        const complaint = await Complaint.findById(complaintId)
+            .populate("userId", "name email");
 
-const {complaintId,technicianId}=req.body;
+        if (!complaint) {
+            return res.status(404).json({
+                success: false,
+                message: "Complaint not found",
+            });
+        }
 
-const complaint=await Complaint.findById(complaintId)
-.populate("userId","name email");
+        const technician = await Technician.findById(technicianId);
 
-if(!complaint){
+        if (!technician) {
+            return res.status(404).json({
+                success: false,
+                message: "Technician not found",
+            });
+        }
 
-return res.status(404).json({
-success:false,
-message:"Complaint not found"
-});
+        const oldStatus = complaint.status;
 
-}
+        complaint.assignedTechnicianId = technician._id;
+        complaint.status = "Assigned";
+        complaint.assignedAt = new Date();
 
-const technician=await Technician.findById(technicianId);
+        await complaint.save();
 
-if(!technician){
+        await NotificationService.notifyStatusChange(
+            complaint,
+            oldStatus,
+            "Assigned",
+            complaint.userId.name,
+            complaint.userId.email
+        );
 
-return res.status(404).json({
-success:false,
-message:"Technician not found"
-});
+        await NotificationService.notifyTechnicianAssigned(
+            complaint,
+            technician._id,
+            technician.name,
+            technician.email
+        );
 
-}
-
-const oldStatus=complaint.status;
-
-complaint.assignedTechnicianId=technician._id;
-
-complaint.status="Assigned";
-
-complaint.assignedAt=new Date();
-
-await complaint.save();
-
-await NotificationService.notifyStatusChange(
-
-complaint,
-
-oldStatus,
-
-"Assigned",
-
-complaint.userId.name,
-
-complaint.userId.email
-
-);
-
-await NotificationService.notifyTechnicianAssigned(
-
-complaint,
-
-technician._id,
-
-technician.name,
-
-technician.email
-
-);
-
-res.json({
-
-success:true,
-
-message:"Technician assigned successfully",
-
-data:complaint
-
-});
-
-}catch(error){
-
-res.status(500).json({
-
-success:false,
-
-message:error.message
-
-});
-
-}
-
+        res.json({
+            success: true,
+            message: "Technician assigned successfully",
+            data: complaint,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
 };
 
-exports.updateComplaintStatus=async(req,res)=>{
+// ===========================
+// Update Complaint Status
+// ===========================
+exports.updateComplaintStatus = async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
 
-try{
+        if (!complaint) {
+            return res.status(404).json({
+                success: false,
+                message: "Complaint not found",
+            });
+        }
 
-const complaint=await Complaint.findById(req.params.id);
+        complaint.status = req.body.status;
+        await complaint.save();
 
-if(!complaint){
-
-return res.status(404).json({
-
-success:false,
-
-message:"Complaint not found"
-
-});
-
-}
-
-complaint.status=req.body.status;
-
-await complaint.save();
-
-res.json({
-
-success:true,
-
-message:"Complaint updated successfully",
-
-data:complaint
-
-});
-
-}catch(error){
-
-res.status(500).json({
-
-success:false,
-
-message:error.message
-
-});
-
-}
-
+        res.json({
+            success: true,
+            message: "Complaint updated successfully",
+            data: complaint,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
 };
 
+// ===========================
+// Get All Technicians
+// ===========================
 exports.getAllTechnicians = async (req, res) => {
     try {
-
         const technicians = await Technician.find()
             .select("-password")
             .sort({ createdAt: -1 });
@@ -488,55 +320,48 @@ exports.getAllTechnicians = async (req, res) => {
         res.status(200).json({
             success: true,
             count: technicians.length,
-            data: technicians
+            data: technicians,
         });
-
     } catch (error) {
-
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
-
     }
 };
 
+// ===========================
+// Get Technician by ID
+// ===========================
 exports.getTechnicianById = async (req, res) => {
-
     try {
-
         const technician = await Technician.findById(req.params.id)
             .select("-password");
 
         if (!technician) {
-
             return res.status(404).json({
                 success: false,
-                message: "Technician not found"
+                message: "Technician not found",
             });
-
         }
 
         res.json({
             success: true,
-            data: technician
+            data: technician,
         });
-
     } catch (error) {
-
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
-
     }
-
 };
 
+// ===========================
+// Create Technician
+// ===========================
 exports.createTechnician = async (req, res) => {
-
     try {
-
         const {
             name,
             education,
@@ -544,437 +369,247 @@ exports.createTechnician = async (req, res) => {
             contactNumber,
             email,
             location,
-            password
+            password,
         } = req.body;
 
         const existing = await Technician.findOne({
-            $or: [
-                { email },
-                { contactNumber }
-            ]
+            $or: [{ email }, { contactNumber }],
         });
 
         if (existing) {
-
             return res.status(400).json({
                 success: false,
-                message: "Technician already exists"
+                message: "Technician already exists",
             });
-
         }
 
         const technician = await Technician.create({
-
             name,
-
             education,
-
             experience,
-
             contactNumber,
-
             email,
-
             location,
-
-            password
-
+            password,
+            status: "available",
+            assignedComplaints: 0,
         });
 
         res.status(201).json({
-
             success: true,
-
             message: "Technician created successfully",
-
             data: {
-
                 id: technician._id,
-
                 name: technician.name,
-
                 email: technician.email,
-
                 contactNumber: technician.contactNumber,
-
-                location: technician.location
-
-            }
-
+                location: technician.location,
+                status: technician.status,
+            },
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
-            message: error.message
-
+            message: error.message,
         });
-
     }
-
 };
 
+// ===========================
+// Update Technician
+// ===========================
 exports.updateTechnician = async (req, res) => {
-
     try {
-
         const technician = await Technician.findById(req.params.id);
 
         if (!technician) {
-
             return res.status(404).json({
-
                 success: false,
-
-                message: "Technician not found"
-
+                message: "Technician not found",
             });
-
         }
 
         Object.assign(technician, req.body);
-
         await technician.save();
 
         res.json({
-
             success: true,
-
             message: "Technician updated successfully",
-
-            data: technician
-
+            data: technician,
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
-            message: error.message
-
+            message: error.message,
         });
-
     }
-
 };
 
+// ===========================
+// Delete Technician
+// ===========================
 exports.deleteTechnician = async (req, res) => {
-
     try {
-
         const technician = await Technician.findById(req.params.id);
 
         if (!technician) {
-
             return res.status(404).json({
-
                 success: false,
-
-                message: "Technician not found"
-
+                message: "Technician not found",
             });
-
         }
 
         await technician.deleteOne();
 
         res.json({
-
             success: true,
-
-            message: "Technician deleted successfully"
-
+            message: "Technician deleted successfully",
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
-            message: error.message
-
+            message: error.message,
         });
-
     }
-
 };
 
+// ===========================
+// Get Complaint Area Report
+// ===========================
 exports.getComplaintAreaReport = async (req, res) => {
-
     try {
-
         const report = await Complaint.aggregate([
-
             {
                 $lookup: {
                     from: "users",
                     localField: "userId",
                     foreignField: "_id",
-                    as: "user"
-                }
+                    as: "user",
+                },
             },
-
-            {
-                $unwind: "$user"
-            },
-
+            { $unwind: "$user" },
             {
                 $group: {
                     _id: "$user.area",
-
-                    total: {
-                        $sum: 1
-                    },
-
+                    total: { $sum: 1 },
                     resolved: {
                         $sum: {
-                            $cond: [
-                                {
-                                    $eq: ["$status", "Completed"]
-                                },
-                                1,
-                                0
-                            ]
-                        }
+                            $cond: [{ $eq: ["$status", "Completed"] }, 1, 0],
+                        },
                     },
-
                     pending: {
                         $sum: {
-                            $cond: [
-                                {
-                                    $ne: ["$status", "Completed"]
-                                },
-                                1,
-                                0
-                            ]
-                        }
-                    }
-                }
+                            $cond: [{ $ne: ["$status", "Completed"] }, 1, 0],
+                        },
+                    },
+                },
             },
-
             {
-                $sort: {
-                    total: -1
-                }
-            }
-
+                $sort: { total: -1 },
+            },
         ]);
 
         res.status(200).json({
             success: true,
-            data: report
+            data: report,
         });
-
     } catch (error) {
-
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
-
     }
-
 };
 
+// ===========================
+// Get Resolution Report
+// ===========================
 exports.getResolutionReport = async (req, res) => {
-
     try {
-
         const total = await Complaint.countDocuments();
-
-        const completed = await Complaint.countDocuments({
-            status: "Completed"
-        });
-
+        const completed = await Complaint.countDocuments({ status: "Completed" });
         const pending = total - completed;
-
-        const inProgress = await Complaint.countDocuments({
-            status: "InProgress"
-        });
-
-        const assigned = await Complaint.countDocuments({
-            status: "Assigned"
-        });
+        const inProgress = await Complaint.countDocuments({ status: "InProgress" });
+        const assigned = await Complaint.countDocuments({ status: "Assigned" });
 
         res.json({
-
             success: true,
-
             data: {
-
                 total,
-
                 completed,
-
                 pending,
-
                 assigned,
-
                 inProgress,
-
-                resolutionRate:
-                    total === 0
-                        ? 0
-                        : Number(((completed / total) * 100).toFixed(2))
-
-            }
-
+                resolutionRate: total === 0
+                    ? 0
+                    : Number(((completed / total) * 100).toFixed(2)),
+            },
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
-            message: error.message
-
+            message: error.message,
         });
-
     }
-
 };
 
+// ===========================
+// Get Monthly Report
+// ===========================
 exports.getMonthlyReport = async (req, res) => {
-
     try {
-
         const sixMonthsAgo = new Date();
-
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
 
         const report = await Complaint.aggregate([
-
             {
                 $match: {
                     submittedAt: {
-                        $gte: sixMonthsAgo
-                    }
-                }
+                        $gte: sixMonthsAgo,
+                    },
+                },
             },
-
             {
                 $group: {
-
                     _id: {
-
-                        year: {
-                            $year: "$submittedAt"
-                        },
-
-                        month: {
-                            $month: "$submittedAt"
-                        }
-
+                        year: { $year: "$submittedAt" },
+                        month: { $month: "$submittedAt" },
                     },
-
-                    total: {
-                        $sum: 1
-                    },
-
+                    total: { $sum: 1 },
                     completed: {
-
                         $sum: {
-
-                            $cond: [
-
-                                {
-                                    $eq: [
-                                        "$status",
-                                        "Completed"
-                                    ]
-                                },
-
-                                1,
-
-                                0
-
-                            ]
-
-                        }
-
-                    }
-
-                }
-
+                            $cond: [{ $eq: ["$status", "Completed"] }, 1, 0],
+                        },
+                    },
+                },
             },
-
             {
-
                 $sort: {
-
                     "_id.year": 1,
-
-                    "_id.month": 1
-
-                }
-
-            }
-
+                    "_id.month": 1,
+                },
+            },
         ]);
 
         const monthNames = [
-
-            "Jan",
-
-            "Feb",
-
-            "Mar",
-
-            "Apr",
-
-            "May",
-
-            "Jun",
-
-            "Jul",
-
-            "Aug",
-
-            "Sep",
-
-            "Oct",
-
-            "Nov",
-
-            "Dec"
-
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
         ];
 
-        const formatted = report.map(item => ({
-
+        const formatted = report.map((item) => ({
             month: monthNames[item._id.month - 1],
-
             total: item.total,
-
-            completed: item.completed
-
+            completed: item.completed,
         }));
 
         res.json({
-
             success: true,
-
-            data: formatted
-
+            data: formatted,
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             success: false,
-
-            message: error.message
-
+            message: error.message,
         });
-
     }
-
 };

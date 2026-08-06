@@ -80,7 +80,6 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchAllData();
-    
   }, []);
 
   const fetchAllData = async () => {
@@ -88,7 +87,6 @@ function AdminDashboard() {
     setError(null);
 
     try {
-      // Use Promise.allSettled to handle partial failures
       const results = await Promise.allSettled([
         API.get("/admin/stats"),
         API.get("/admin/complaints/recent"),
@@ -96,45 +94,87 @@ function AdminDashboard() {
         API.get("/admin/complaints/monthly"),
       ]);
 
-      // Handle stats with safe number conversion
+      // Handle stats - API returns { success: true, data: {...} }
       if (results[0].status === 'fulfilled') {
-        const data = results[0].value.data;
-        setStats({
-          totalComplaints: safeNumber(data.totalComplaints),
-          pendingComplaints: safeNumber(data.pendingComplaints),
-          assignedComplaints: safeNumber(data.assignedComplaints),
-          inProgressComplaints: safeNumber(data.inProgressComplaints),
-          completedComplaints: safeNumber(data.completedComplaints),
-          totalTechnicians: safeNumber(data.totalTechnicians),
-          totalUsers: safeNumber(data.totalUsers),
-          resolutionRate: safeNumber(data.resolutionRate),
-        });
+        const response = results[0].value;
+        console.log('📊 Stats response:', response);
+        
+        // Check if response has data property
+        if (response.data && response.data.data) {
+          const data = response.data.data;
+          setStats({
+            totalComplaints: safeNumber(data.totalComplaints),
+            pendingComplaints: safeNumber(data.pending),
+            assignedComplaints: safeNumber(data.assigned),
+            inProgressComplaints: safeNumber(data.inProgress),
+            completedComplaints: safeNumber(data.completed),
+            totalTechnicians: safeNumber(data.technicians),
+            totalUsers: safeNumber(data.users),
+            resolutionRate: safeNumber(data.resolutionRate || 0),
+          });
+        } else if (response.data) {
+          // Fallback: try direct data
+          const data = response.data;
+          setStats({
+            totalComplaints: safeNumber(data.totalComplaints),
+            pendingComplaints: safeNumber(data.pending),
+            assignedComplaints: safeNumber(data.assigned),
+            inProgressComplaints: safeNumber(data.inProgress),
+            completedComplaints: safeNumber(data.completed),
+            totalTechnicians: safeNumber(data.technicians),
+            totalUsers: safeNumber(data.users),
+            resolutionRate: safeNumber(data.resolutionRate || 0),
+          });
+        }
       } else {
         console.error('Failed to fetch stats:', results[0].reason);
-        // Keep default stats (all 0)
       }
 
-      // Handle recent complaints - ENSURE IT'S AN ARRAY
+      // Handle recent complaints - API returns { success: true, data: [...] }
       if (results[1].status === 'fulfilled') {
-        const data = results[1].value.data;
+        const response = results[1].value;
+        console.log('📋 Recent complaints response:', response);
+        
+        let data = [];
+        if (response.data && response.data.data) {
+          data = response.data.data;
+        } else if (response.data) {
+          data = response.data;
+        }
         setRecentComplaints(Array.isArray(data) ? data : []);
       } else {
         console.error('Failed to fetch recent complaints:', results[1].reason);
         setRecentComplaints([]);
       }
 
-      // Handle area data - ENSURE IT'S AN ARRAY
+      // Handle area data - API returns { success: true, data: [...] }
       if (results[2].status === 'fulfilled') {
-        const data = results[2].value.data;
+        const response = results[2].value;
+        console.log('📊 Area data response:', response);
+        
+        let data = [];
+        if (response.data && response.data.data) {
+          data = response.data.data;
+        } else if (response.data) {
+          data = response.data;
+        }
         setAreaData(Array.isArray(data) ? data : []);
       } else {
         console.error('Failed to fetch area data:', results[2].reason);
         setAreaData([]);
       }
 
-      // Handle monthly data - ENSURE IT'S AN ARRAY
+      // Handle monthly data - API returns { success: true, data: [...] }
       if (results[3].status === 'fulfilled') {
-        const data = results[3].value.data;
+        const response = results[3].value;
+        console.log('📈 Monthly data response:', response);
+        
+        let data = [];
+        if (response.data && response.data.data) {
+          data = response.data.data;
+        } else if (response.data) {
+          data = response.data;
+        }
         setMonthlyData(Array.isArray(data) ? data : []);
       } else {
         console.error('Failed to fetch monthly data:', results[3].reason);
@@ -143,7 +183,6 @@ function AdminDashboard() {
 
     } catch (error) {
       handleError(error);
-      // Set empty arrays on error
       setRecentComplaints([]);
       setAreaData([]);
       setMonthlyData([]);

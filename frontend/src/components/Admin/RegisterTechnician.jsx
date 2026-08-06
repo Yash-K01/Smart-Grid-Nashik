@@ -76,11 +76,12 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
     }
 
     // Phone validation (10 digits)
-    const phoneRegex = /^[0-9]{10}$/
-    if (!phoneRegex.test(formData.contactNumber)) {
-      toast.error('Please enter a valid 10-digit contact number')
-      return
-    }
+    // In handleSubmit function - add this validation
+      const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(formData.contactNumber)) {
+            toast.error('Contact number must be 10 digits starting with 6, 7, 8, or 9');
+            return;
+        }
 
     // Password validation (minimum 6 characters)
     if (formData.password.length < 6) {
@@ -204,14 +205,14 @@ function RegisterTechnician({ showList = true, showForm = true, refreshDashboard
               
               <div className="grid md:grid-cols-2 gap-4">
                 <input 
-                  type="tel" 
-                  name="contactNumber" 
-                  placeholder="Contact Number * (10 digits)" 
-                  value={formData.contactNumber} 
-                  onChange={handleChange} 
-                  required 
-                  maxLength="10"
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                    type="tel" 
+                    name="contactNumber"
+                    placeholder="Contact Number * (10 digits starting with 6-9)" 
+                    value={formData.contactNumber} 
+                    onChange={handleChange} 
+                    required 
+                    maxLength="10"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
                 />
                 <input 
                   type="email" 

@@ -25,6 +25,14 @@ function ViewAssignments({ mode = 'all' }) {
   const [remark, setRemark] = useState('')
   const [error, setError] = useState(null)
 
+  const ensureArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  if (data?.assignments && Array.isArray(data.assignments)) return data.assignments;
+  if (data?.complaints && Array.isArray(data.complaints)) return data.complaints;
+  return [];
+};
+
   useEffect(() => {
     fetchAssignments()
     const interval = setInterval(fetchAssignments, 15000)
@@ -53,14 +61,16 @@ function ViewAssignments({ mode = 'all' }) {
       const response = await API.get('/technician/complaints', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setAssignments(response.data)
-      setError(null)
-    } catch (error) {
-      handleError(error)
-      setError('Failed to load assignments')
-    } finally {
-      setLoading(false)
-    }
+      const safeData = ensureArray(response.data)
+    setAssignments(safeData)
+    setError(null)
+  } catch (error) {
+    handleError(error)
+    setError('Failed to load assignments')
+    setAssignments([]) // Set to empty array on error
+  } finally {
+    setLoading(false)
+  }
   }
 
   const acceptWork = async (id) => {

@@ -86,58 +86,64 @@ exports.updateProfile = async (req, res) => {
 
 };
 
+// backend/controllers/userController.js
+
+// backend/controllers/userController.js
+
 exports.createComplaint = async (req, res) => {
-
+    console.log('📝 Complaint submission received:');
+    console.log('Body:', req.body);
+    console.log('File path:', req.filePath);
+    console.log('User ID:', req.user?.id);
+    
     try {
+        const { complaintType, description, latitude, longitude, address } = req.body;
+        const userId = req.user.id;
 
-        const {
+        // Log each step
+        console.log('📌 Step 1: Validating input...');
+        
+        if (!complaintType) {
+            console.log('❌ Missing complaint type');
+            return res.status(400).json({
+                success: false,
+                message: 'Complaint type is required'
+            });
+        }
 
-            title,
-
-            description,
-
-            category
-
-        } = req.body;
-
-        const complaint = await Complaint.create({
-
-            userId: req.user.id,
-
-            title,
-
-            description,
-
-            category,
-
-            image: req.file ? req.file.filename : null,
-
-            status: "Pending"
-
+        console.log('📌 Step 2: Creating complaint in database...');
+        
+        const complaint = new Complaint({
+            userId,
+            complaintType,
+            description: description || '',
+            latitude: latitude || null,
+            longitude: longitude || null,
+            address: address || '',
+            image: req.filePath || '', // Use 'image' field from model
+            status: 'Pending',
+            submittedAt: new Date()
         });
-
+        
+        await complaint.save();
+        console.log('✅ Complaint saved with ID:', complaint._id);
+        
         res.status(201).json({
-
             success: true,
-
-            message: "Complaint submitted successfully.",
-
-            data: complaint
-
+            message: 'Complaint submitted successfully',
+            complaint
         });
-
+        
     } catch (error) {
-
+        console.error('❌ Error creating complaint:', error);
+        console.error('Stack:', error.stack);
+        
         res.status(500).json({
-
             success: false,
-
-            message: error.message
-
+            message: 'Failed to submit complaint',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
-
     }
-
 };
 
 exports.getComplaints = async (req, res) => {

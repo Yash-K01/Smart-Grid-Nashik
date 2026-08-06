@@ -35,6 +35,13 @@ function TrackComplaint() {
     return `${cleanBase}/${cleanPath}`
   }
 
+  const ensureArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  if (data?.complaints && Array.isArray(data.complaints)) return data.complaints;
+  return [];
+};
+
   useEffect(() => {
     fetchComplaints()
     const interval = setInterval(fetchComplaints, 30000)
@@ -61,14 +68,16 @@ function TrackComplaint() {
       }
 
       const response = await API.get('/user/complaints')
-      setComplaints(response.data)
-      setError(null)
-    } catch (error) {
-      handleError(error)
-      setError('Failed to load complaints')
-    } finally {
-      setLoading(false)
-    }
+      const safeData = ensureArray(response.data)
+    setComplaints(safeData)
+    setError(null)
+  } catch (error) {
+    handleError(error)
+    setError('Failed to load complaints')
+    setComplaints([]) // Set to empty array on error
+  } finally {
+    setLoading(false)
+  }
   }
 
   const getStatusColor = (status) => {

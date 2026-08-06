@@ -16,21 +16,7 @@ const complaintSchema = new mongoose.Schema(
       index: true,
     },
 
-    title: {
-      type: String,
-      required: [true, "Complaint title is required"],
-      trim: true,
-      maxlength: 150,
-    },
-
-    description: {
-      type: String,
-      required: [true, "Complaint description is required"],
-      trim: true,
-      maxlength: 1000,
-    },
-
-    category: {
+    complaintType: {
       type: String,
       required: true,
       enum: [
@@ -44,6 +30,20 @@ const complaintSchema = new mongoose.Schema(
         "Street Light",
         "Other",
       ],
+    },
+
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 150,
+    },
+
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
     },
 
     image: {
@@ -71,7 +71,7 @@ const complaintSchema = new mongoose.Schema(
       default: "Medium",
     },
 
-    remarks: {
+    remarks: {  // Keep as 'remarks' to match your controller
       type: String,
       default: "",
       trim: true,
@@ -121,7 +121,9 @@ const complaintSchema = new mongoose.Schema(
 // ==========================
 // Indexes
 // ==========================
-complaintSchema.index({ category: 1 });
+complaintSchema.index({ complaintType: 1 });
+complaintSchema.index({ userId: 1, status: 1 });
+complaintSchema.index({ assignedTechnicianId: 1, status: 1 });
 complaintSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Complaint", complaintSchema);

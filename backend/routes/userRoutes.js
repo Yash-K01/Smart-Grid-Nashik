@@ -2,13 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { protect, authorize } = require("../middleware/auth");
-
-const {
-    complaintValidation,
-    objectIdValidation
-} = require("../middleware/validation");
-
-const upload = require("../middleware/upload");
+const uploadFile = require("../middleware/upload"); // Import the express-fileupload middleware
 
 const userController = require("../controllers/userController");
 
@@ -36,8 +30,7 @@ router.post(
     "/complaint",
     protect,
     authorize("user"),
-    upload.single("image"),
-    complaintValidation,
+    uploadFile, // Use express-fileupload middleware
     userController.createComplaint
 );
 
@@ -52,7 +45,6 @@ router.get(
     "/complaint/:id",
     protect,
     authorize("user"),
-    objectIdValidation,
     userController.getComplaintById
 );
 
@@ -60,7 +52,6 @@ router.delete(
     "/complaint/:id",
     protect,
     authorize("user"),
-    objectIdValidation,
     userController.cancelComplaint
 );
 
@@ -88,7 +79,6 @@ router.put(
     "/notification/:id/read",
     protect,
     authorize("user"),
-    objectIdValidation,
     userController.markNotificationRead
 );
 
@@ -96,7 +86,6 @@ router.delete(
     "/notification/:id",
     protect,
     authorize("user"),
-    objectIdValidation,
     userController.deleteNotification
 );
 

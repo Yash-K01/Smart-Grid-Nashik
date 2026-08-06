@@ -57,9 +57,17 @@ const technicianSchema = new mongoose.Schema(
       select: false,
     },
 
-    isAvailable: {
-      type: Boolean,
-      default: true,
+    // FIX 1: Change from 'isAvailable' to 'status' to match frontend
+    status: {
+      type: String,
+      enum: ['available', 'busy'],
+      default: 'available',
+    },
+
+    // FIX 2: Add this field for tracking assigned complaints
+    assignedComplaints: {
+      type: Number,
+      default: 0,
     },
 
     latitude: {
@@ -76,6 +84,11 @@ const technicianSchema = new mongoose.Schema(
       type: String,
       enum: ["technician"],
       default: "technician",
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -119,6 +132,7 @@ technicianSchema.methods.toJSON = function () {
 // ====================================
 // Indexes
 // ====================================
-technicianSchema.index({ isAvailable: 1 });
+technicianSchema.index({ status: 1 }); // Changed from isAvailable
+technicianSchema.index({ assignedTechnicianId: 1 }); // For faster queries
 
 module.exports = mongoose.model("Technician", technicianSchema);

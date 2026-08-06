@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import API from '../../config/api' // Use API instance instead of axios directly
+import API from '../../config/api'
 
 // Fix Leaflet default icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -24,6 +24,14 @@ function AssignTechnician() {
   const [assigning, setAssigning] = useState(false)
   const [selectedTechnician, setSelectedTechnician] = useState(null)
 
+  // Helper function to ensure data is always an array
+  const ensureArray = (data) => {
+    if (Array.isArray(data)) return data
+    if (data?.data && Array.isArray(data.data)) return data.data
+    if (data?.technicians && Array.isArray(data.technicians)) return data.technicians
+    return []
+  }
+
   useEffect(() => {
     fetchComplaint()
     fetchTechnicians()
@@ -38,10 +46,11 @@ function AssignTechnician() {
         return
       }
 
-      const response = await API.get(`/admin/complaint/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setComplaint(response.data)
+      const response = await API.get(`/admin/complaint/${id}`)
+      
+      // Handle response with data wrapper
+      const complaintData = response.data?.data || response.data
+      setComplaint(complaintData)
     } catch (error) {
       console.error('Error fetching complaint:', error)
       const errorMessage = error.response?.data?.message || 'Complaint not found'
@@ -61,12 +70,17 @@ function AssignTechnician() {
         return
       }
 
-      const response = await API.get('/admin/technicians', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const response = await API.get('/admin/technicians')
+      console.log('📊 Technicians response:', response.data)
+      
+      // Extract technicians array using ensureArray
+      const techs = ensureArray(response.data)
+      console.log('👥 All technicians:', techs)
       
       // Filter only available technicians
-      const availableTechs = response.data.filter(tech => tech.status === 'available')
+      const availableTechs = techs.filter(tech => tech.status === 'available')
+      console.log('✅ Available technicians:', availableTechs)
+      
       setTechnicians(availableTechs)
     } catch (error) {
       console.error('Error fetching technicians:', error)
@@ -76,8 +90,8 @@ function AssignTechnician() {
   }
 
   const handleAssign = async (technicianId) => {
-    // Check if complaint already has a technician assigned
-    if (complaint?.technicianId) {
+    // Check if complaint already has a technician assigned (using assignedTechnicianId)
+    if (complaint?.assignedTechnicianId) {
       toast.error('This complaint already has a technician assigned')
       return
     }
@@ -97,8 +111,7 @@ function AssignTechnician() {
         { 
           complaintId: id,
           technicianId: technicianId 
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       )
       
       toast.success('Technician assigned successfully!')
@@ -125,7 +138,7 @@ function AssignTechnician() {
     
     return (
       <MapContainer
-        key={`map-${complaint._id}`} // Add key for re-rendering
+        key={`map-${complaint._id}`}
         center={position}
         zoom={14}
         style={{ height: "300px", width: "100%", borderRadius: "0.5rem" }}
@@ -241,19 +254,19 @@ function AssignTechnician() {
               <div className="mb-4">
                 <p className="text-sm text-gray-500 mb-2">Location</p>
                 <ComplaintMap />
-                {complaint?.locationAddress && (
+                {complaint?.address && (
                   <p className="text-gray-500 text-xs mt-2 flex items-center gap-1">
-                    <span>📍</span> {complaint.locationAddress}
+                    <span>📍</span> {complaint.address}
                   </p>
                 )}
               </div>
 
               {/* Technician Assignment Status */}
-              {complaint?.technicianId && (
+              {complaint?.assignedTechnicianId && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-700">
                     <span className="font-semibold">Already Assigned:</span> 
-                    {' '}{complaint.technicianId?.name || 'Technician assigned'}
+                    {' '}{complaint.assignedTechnicianId?.name || 'Technician assigned'}
                   </p>
                 </div>
               )}
@@ -331,11 +344,11 @@ function AssignTechnician() {
                       </div>
                       <button
                         onClick={() => handleAssign(tech._id)}
-                        disabled={assigning || complaint?.technicianId}
+                        disabled={assigning || complaint?.assignedTechnicianId}
                         className={`px-6 py-2 rounded-lg transition font-medium whitespace-nowrap ${
                           assigning && selectedTechnician === tech._id
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : complaint?.technicianId
+                            : complaint?.assignedTechnicianId
                             ? 'bg-gray-300 cursor-not-allowed'
                             : 'bg-green-600 hover:bg-green-700 text-white'
                         }`}
@@ -345,7 +358,7 @@ function AssignTechnician() {
                             <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                             Assigning...
                           </span>
-                        ) : complaint?.technicianId ? (
+                        ) : complaint?.assignedTechnicianId ? (
                           'Already Assigned'
                         ) : (
                           'Assign'

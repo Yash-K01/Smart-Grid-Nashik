@@ -30,6 +30,7 @@ function ManageComplaints({ refreshDashboard }) {
     if (Array.isArray(data)) return data
     if (data?.data && Array.isArray(data.data)) return data.data
     if (data?.complaints && Array.isArray(data.complaints)) return data.complaints
+    if (data?.technicians && Array.isArray(data.technicians)) return data.technicians
     return []
   }
 
@@ -61,13 +62,44 @@ function ManageComplaints({ refreshDashboard }) {
 
   const fetchTechnicians = async () => {
     try {
+      console.log('📡 Fetching technicians from /admin/technicians...')
       const response = await API.get('/admin/technicians')
-      const data = ensureArray(response.data)
-      // Filter only available technicians
-      const availableTechs = data.filter(tech => tech.status === 'available')
-      setTechnicians(availableTechs)
+      console.log('📊 Full API Response:', response)
+      console.log('📊 Response data:', response.data)
+      
+      // Extract technicians array
+      let techs = []
+      if (Array.isArray(response.data)) {
+        techs = response.data
+        console.log('✅ Response is array, length:', techs.length)
+      } else if (response.data && typeof response.data === 'object') {
+        // Try common property names
+        techs = response.data.data || 
+                response.data.technicians || 
+                response.data.results || 
+                []
+        console.log('📦 Extracted from object, length:', techs.length)
+      }
+      
+      console.log('👥 All technicians:', techs)
+      console.log('📊 Number of technicians:', techs.length)
+      
+      // FIX: Filter only available technicians
+      const availableTechs = techs.filter(tech => tech.status === 'available')
+      console.log('✅ Available technicians:', availableTechs.length)
+      
+      if (techs.length === 0) {
+        console.warn('⚠️ No technicians found in database')
+        setTechnicians([])
+      } else if (availableTechs.length === 0) {
+        console.warn('⚠️ Technicians exist but none have status "available"')
+        console.log('📊 Technician statuses:', techs.map(t => ({ name: t.name, status: t.status })))
+        setTechnicians([]) // Show empty if none available
+      } else {
+        setTechnicians(availableTechs) // Only show available technicians
+      }
     } catch (error) {
-      console.error('Error fetching technicians:', error)
+      console.error('❌ Error fetching technicians:', error)
       toast.error(error.response?.data?.message || 'Failed to load technicians')
       setTechnicians([])
     }
@@ -91,8 +123,9 @@ function ManageComplaints({ refreshDashboard }) {
   }
 
   const assignTechnician = async (complaintId, technicianId) => {
+    // FIX: Use assignedTechnicianId instead of technicianId
     const complaint = complaints.find(c => c._id === complaintId)
-    if (complaint?.technicianId) {
+    if (complaint?.assignedTechnicianId) {
       toast.error('This complaint already has a technician assigned')
       return
     }
@@ -300,9 +333,9 @@ function ManageComplaints({ refreshDashboard }) {
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(complaint.status)}`}>
                         {complaint.status}
                       </span>
-                      {complaint.technicianId && (
+                      {complaint.assignedTechnicianId && (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          👤 {complaint.technicianId?.name || 'Assigned'}
+                          👤 {complaint.assignedTechnicianId?.name || 'Assigned'}
                         </span>
                       )}
                     </div>
@@ -388,6 +421,12 @@ function ManageComplaints({ refreshDashboard }) {
                   <div className="text-center py-8">
                     <p className="text-gray-500">No technicians available</p>
                     <p className="text-gray-400 text-sm mt-1">Please register a technician first</p>
+                    <button 
+                      onClick={() => window.location.href = '/admin/register-technician'} 
+                      className="mt-3 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    >
+                      Register Technician
+                    </button>
                   </div>
                 ) : (
                   technicians.map((tech) => (
@@ -403,12 +442,18 @@ function ManageComplaints({ refreshDashboard }) {
                           <p className="text-sm text-gray-600">
                             📍 {tech.location || 'N/A'} | 📞 {tech.contactNumber || 'N/A'}
                           </p>
+                          <p className="text-xs">
+                            Status: <span className="text-green-600 font-semibold">Available</span>
+                          </p>
                           {tech.assignedComplaints !== undefined && (
                             <p className="text-xs text-gray-500">
                               📋 {tech.assignedComplaints} active complaints
                             </p>
                           )}
                         </div>
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          Available
+                        </span>
                         {assigning && selectedTechnician === tech._id && (
                           <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-600 border-t-transparent"></div>
                         )}

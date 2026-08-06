@@ -165,8 +165,8 @@ const technicianValidation = [
         .trim()
         .notEmpty()
         .withMessage("Name is required")
-        .isLength({ min: 3, max: 100 })
-        .withMessage("Name must be between 3 and 100 characters")
+        .isLength({ min: 2, max: 100 })
+        .withMessage("Name must be between 2 and 100 characters")
         .matches(/^[a-zA-Z\s]+$/)
         .withMessage("Name can only contain letters and spaces"),
 
@@ -174,11 +174,15 @@ const technicianValidation = [
         .trim()
         .isEmail()
         .withMessage("Invalid email format")
-        .normalizeEmail(),
+        .normalizeEmail()
+        .withMessage("Please enter a valid email address"),
 
     body("contactNumber")
+        .trim()
+        .notEmpty()
+        .withMessage("Contact number is required")
         .matches(/^[6-9]\d{9}$/)
-        .withMessage("Invalid contact number. Must be 10 digits starting with 6-9"),
+        .withMessage("Contact number must be 10 digits starting with 6, 7, 8, or 9"),
 
     body("location")
         .trim()
@@ -188,10 +192,12 @@ const technicianValidation = [
         .withMessage("Location must be between 2 and 100 characters"),
 
     body("password")
+        .notEmpty()
+        .withMessage("Password is required")
         .isLength({ min: 6 })
         .withMessage("Password must be at least 6 characters")
         .isLength({ max: 100 })
-        .withMessage("Password is too long"),
+        .withMessage("Password is too long (max 100 characters)"),
 
     body("education")
         .optional()

@@ -189,35 +189,6 @@ function TechnicianDashboard() {
 
       {/* Main Content */}
       <div className="ml-72">
-        {/* Stats Bar */}
-        <div className="bg-white shadow-md p-4 border-b">
-          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-800">
-                {activeTab === 'assignments' ? '📋 My Assignments' : '🔄 Update Status'}
-              </h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Assigned:</span>
-                <span className="font-semibold text-yellow-600">{stats.assigned}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">In Progress:</span>
-                <span className="font-semibold text-blue-600">{stats.inProgress}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Completed:</span>
-                <span className="font-semibold text-green-600">{stats.completed}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Total:</span>
-                <span className="font-semibold text-gray-800">{stats.total}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Content Area */}
         <div className="p-8">
           {error ? (
