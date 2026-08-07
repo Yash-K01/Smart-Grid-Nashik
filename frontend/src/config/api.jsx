@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create Axios Instance
 const API = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "https://smart-grid-nashik.onrender.com/api", 
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api", 
     headers: {
         "Content-Type": "application/json",
     },
