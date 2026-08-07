@@ -74,9 +74,28 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true, user };
         } catch (error) {
-            toast.error(
-                error.response?.data?.message || "Invalid Credentials"
-            );
+            console.error("❌ Login error:", error);
+            
+            // Better error handling for mobile
+            if (error.response) {
+                const status = error.response.status;
+                const message = error.response.data?.message || "Invalid Credentials";
+                
+                if (status === 401) {
+                    toast.error("Invalid email or password");
+                } else if (status === 404) {
+                    toast.error("User not found");
+                } else if (status === 500) {
+                    toast.error("Server error. Please try again later");
+                } else {
+                    toast.error(message);
+                }
+            } else if (error.request) {
+                toast.error("Network error. Please check your internet connection");
+            } else {
+                toast.error("Something went wrong. Please try again");
+            }
+            
             return { success: false };
         } finally {
             setAuthLoading(false);
@@ -87,19 +106,48 @@ export const AuthProvider = ({ children }) => {
     const register = async (formData, role = "user") => {
         setAuthLoading(true);
         try {
+            console.log("📝 Registering user:", { ...formData, password: "***hidden***" });
+            
             const res = await API.post("/auth/register", {
                 ...formData,
                 role,
             });
 
+            console.log("✅ Registration successful:", res.data);
+            
             toast.success(res.data.message || "Registration Successful");
             navigate("/login");
 
-            return { success: true };
+            return { success: true, data: res.data };
         } catch (error) {
-            toast.error(
-                error.response?.data?.message || "Registration Failed"
-            );
+            console.error("❌ Registration error:", error);
+            
+            // Better error handling for registration
+            if (error.response) {
+                const status = error.response.status;
+                const message = error.response.data?.message || "Registration Failed";
+                
+                if (status === 409) {
+                    toast.error("User already exists with this email or meter number");
+                } else if (status === 400) {
+                    // Show validation errors
+                    const errors = error.response.data?.errors;
+                    if (errors && Array.isArray(errors)) {
+                        toast.error(errors[0]?.msg || message);
+                    } else {
+                        toast.error(message);
+                    }
+                } else if (status === 500) {
+                    toast.error("Server error. Please try again later");
+                } else {
+                    toast.error(message);
+                }
+            } else if (error.request) {
+                toast.error("Network error. Please check your internet connection");
+            } else {
+                toast.error("Something went wrong. Please try again");
+            }
+            
             return { success: false };
         } finally {
             setAuthLoading(false);
